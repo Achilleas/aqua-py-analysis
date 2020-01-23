@@ -1,0 +1,29 @@
+astro_only
+  folder_1 (mxxxx_dxxxx_cxxx)
+    folder_2 (day_x)
+      plots
+        borders:
+          heatmap plot of centre landmark and border
+        events:
+          heatmap/contour of all events over different behaviours
+        behaviours:
+          behaviour plots
+        signal_delays:
+          signal delays plot (watefall) over different behaviours
+        signal_durations:
+          signal durations histogram over different behaviours
+        triplet:
+          triplet plot over different behaviours
+      results
+        short/medium/long signals over different behaviours csv
+        number of events for each behaviour csv
+  .
+  .
+green-red
+  .
+  .
+  .
+astro_dendrite
+  .
+  .
+  .

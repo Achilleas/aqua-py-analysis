@@ -1,0 +1,106 @@
+mkvirtualenv --python=/usr/local/bin/python3 leo
+pip install jupyter numpy pandas xlrd scipy matplotlib torch torchvision
+#Image registration
+pip install pystackreg scikit-image docopt numpy imageio tifffile
+#Preprocessing
+pip install pandas openpyxl
+#Jupyter extensions
+pip install jupyter_nbextensions_configurator jupyter_contrib_nbextensions
+jupyter contrib nbextension install --user
+jupyter nbextensions_configurator enable --user
+
+
+Python version: Python 3.7
+
+Libraries
+
+General libraries for numeric computations
+------------------------------
+numpy==1.16.0 (for everything)
+pandas==0.23.4 (sometimes)
+scipy==1.2.0 (correlations, mean confidence interval)
+------------------------------
+Visualization
+-------------
+seaborn==0.9.0
+matplotlib==3.0.2
+plotly==3.5.0
+-------------
+plotly-orca for figures
+
+Libraries extended (don't write all this, will put on github at some point):
+
+appnope==0.1.0
+backcall==0.1.0
+bleach==3.1.0
+certifi==2018.11.29
+chardet==3.0.4
+cycler==0.10.0
+decorator==4.3.0
+defusedxml==0.5.0
+docopt==0.6.2
+entrypoints==0.3
+h5py==2.9.0
+hdf5storage==0.1.15
+idna==2.8
+imageio==2.4.1
+ipydatawidgets==4.0.0
+ipykernel==5.1.0
+ipython==7.2.0
+ipython-genutils==0.2.0
+ipyvolume==0.5.1
+ipywebrtc==0.4.3
+ipywidgets==7.4.2
+jedi==0.13.2
+Jinja2==2.10
+jsonschema==2.6.0
+jupyter==1.0.0
+jupyter-client==5.2.4
+jupyter-console==6.0.0
+jupyter-core==4.4.0
+kiwisolver==1.0.1
+MarkupSafe==1.1.0
+mat4py==0.4.2
+matplotlib==3.0.2
+mistune==0.8.4
+nbconvert==5.4.0
+nbformat==4.4.0
+networkx==2.2
+notebook==5.7.4
+numpy==1.16.0
+pandas==0.23.4
+pandocfilters==1.4.2
+parso==0.3.1
+pexpect==4.6.0
+pickleshare==0.7.5
+Pillow==5.4.1
+plotly==3.5.0
+prometheus-client==0.5.0
+prompt-toolkit==2.0.7
+psutil==5.6.0
+ptyprocess==0.6.0
+Pygments==2.3.1
+pyparsing==2.3.1
+python-dateutil==2.7.5
+pythreejs==2.0.2
+pytz==2018.9
+PyWavelets==1.0.2
+pyzmq==17.1.2
+qtconsole==4.4.3
+requests==2.21.0
+retrying==1.3.3
+scikit-image==0.15.0
+scipy==1.2.0
+seaborn==0.9.0
+Send2Trash==1.5.0
+six==1.12.0
+terminado==0.8.1
+testpath==0.4.2
+tifffile==2019.1.4
+tornado==5.1.1
+traitlets==4.3.2
+traittypes==0.2.1
+urllib3==1.24.1
+wcwidth==0.1.7
+webencodings==0.5.1
+widgetsnbextension==3.4.2
