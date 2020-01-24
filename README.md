@@ -46,3 +46,6 @@ Part 2:
 
 Part 3:
   1) Load result file (res.pkl)
+
+
+**[Processed dataset example](https://drive.google.com/open?id=1AKd6eTaFozHGF5d6zzddp5zLGm503cFs)**
