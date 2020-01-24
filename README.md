@@ -9,21 +9,35 @@ Input:
       - Two-photon microscopy movie of astrocyte recording (30.9Hz) 
       - Movement artifact x,y drift correction (translation) using TurgoReg in Fiji (see preprocessing/registration)
       - 1 pixel 3D gaussian filter
-      - Moving average (30.9Hz -> 10.3Hz base framerate)
+      - Moving average z=3 (30.9Hz -> 10.3Hz base framerate)
       - Output folder of registered .tif files (not provided)
-  2) Processed oscilloscope, speed data concatenated in one .csv file (10.3Hz)
+  2) Pre-processed oscilloscope data concatenated in one .csv file (same framerate)
      ex.
-      - https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py 
+      - Rotary encoder analog signal from oscilloscope from MDF
+      - Preprocess with: https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py 
         #python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 --bin_size=97
-      - 
-
-| pupil (float)  | stick (bool) | whiskers (float) |
-| ------------- | ------------- | -------------|
-| 84.932  | 0  | 2.15 |
-| 84.851  | 0  | 2.158 |
-| ...  | ...  | ... |
-
-rotary encoder analog signals and animal behaviour movies were synchronously recorded using MScan software.
-
-
-Two-photon microscopy movies (30.9 Hz),  Proprietary video format files (MDF, Sutter Instruments Inc.) were converted to Tiff using commercial software (MView, Sutter Instrument). Time lapse recordings were preprocessed using Fiji. Movement artifact x, y drift was corrected using the TurboReg plugin (using stiff translation) and a custom macro to automate the process. Videos were then visually inspected to confirm movement artifact correction. A 1 pixel 3D gaussian filter was ap- plied to all 2P image stacks (Fiji). A moving average (bin size = 3) was used to average the recorded video (30.9 Hz) down to 10.3 Hz to increase signal to noise ratio (⇡ 1.7x increase).
+  3) Pre-processed behavioural data (pupil, stick, whiskers) in one .csv file (same framerate)
+      ex.
+       - Behavioural videos from MDF
+       - Run https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/get_roi_data_avg_only.ijm
+        - Load ROI manager and set ROIs in Fiji (pupil, stick, whiskers)
+        - Run script (moving average 10.3Hz and save ROI values) over folder of .tif behaviour videos
+        - Merge all .csv files (1 per behaviour video) into a single .csv file 
+        https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/merge_roi_folders.py
+       
+      Result:
+      
+      | pupil (float)  | stick (bool/float) | whiskers (float) |
+      | ------------- | ------------- | -------------|
+      | 84.932  | 0  | 2.15 |
+      | 84.851  | 0  | 2.158 |
+      | ...  | ...  | ... |
+      
+  4) Run AqUA 
+    - https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom.m
+    
+    - Preferably use with cell bound (removes events outside bound) use AqUA interface to generate 2 AqUA landmarks (centre, cell bound)
+    - https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m
+    - If multiple files, merge result files with 
+      https://github.com/Achilleas/aqua-py-analysis/blob/master/aqua_merge_outputs.ipynb to obtain res.pkl
+  5) Load result file (res.pkl)
