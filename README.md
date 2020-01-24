@@ -12,11 +12,12 @@ Input:
       - Moving average z=3 (30.9Hz -> 10.3Hz base framerate)
       - Output folder of registered .tif files (not provided)
       
-  2) Run AqUA 
-    - https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom.m
-    
+  2) Run AQuA 
+     - **[default - aqua_cmd_custom.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom.m)**
+     
+     - **[with bounds_- cmd_custom_multi_bound.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m)**
+     
     - Preferably use with cell bound (removes events outside bound) use AqUA interface to generate 2 AqUA landmarks (centre, cell bound)
-    - https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m
     - If multiple files, merge result files with 
       https://github.com/Achilleas/aqua-py-analysis/blob/master/aqua_merge_outputs.ipynb to obtain res.pkl
       
