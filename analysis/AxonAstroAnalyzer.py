@@ -23,9 +23,6 @@ class AxonAstroAnalyzer():
         self.delay_min = 0
         self.delay_max = 30
 
-        #Axon fix area
-        self.pass_area_rate = 0.2
-
         if aqua_bound:
             self.aqua_base_path = 'aqua_bound/aqua_merged/merged.pkl'
         else:
@@ -307,15 +304,6 @@ class AxonAstroAnalyzer():
         for lk in landmark_borders.keys():
             for event_centroid, event_i in zip(event_centroids, event_indices):
                 if landmark_borders[lk][int(event_centroid[0]), int(event_centroid[1])] == 1:
-                    #Remove any events in axons that are <20% of their area for (axons only)
-                    #This is very typically noise of the blobs due to z axis and movement shifts
-                    '''
-                    if lk in self.axon_keys:
-                        min_area = np.sum(landmark_borders[lk]) * self.spatial_res**2 * self.pass_area_rate
-                        if min_area > self.res_d['area'][event_i]:
-                            events_excluded[lk].append(event_i)
-                            continue
-                    '''
                     events_contained[lk].append(event_i)
 
         return events_contained, events_excluded
