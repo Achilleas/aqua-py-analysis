@@ -1,10 +1,9 @@
-from importlib import reload  # Python 3.4+ only.
 import h5py
 import os, sys, glob
 import numpy as np
 import plotly.offline as offline
 from preprocessing import analysis_pp
-from analysis.general_utils import aqua_utils, saving_utils, graph_utils, plotly_utils, general_utils, compare_astro_utils, correlation_utils, stat_utils
+from analysis.general_utils import aqua_utils, saving_utils, plotly_utils, general_utils, compare_astro_utils, correlation_utils, stat_utils
 from scipy.stats.stats import power_divergence
 from scipy.stats import ttest_ind_from_stats
 import csv
@@ -15,9 +14,6 @@ from pandas import DataFrame
 from scipy import optimize
 import pandas as pd
 import matplotlib.pyplot as plt
-
-#/Users/achilleasgeorgiou/Desktop/data_output
-#experiment_path = '/Users/achilleasgeorgiou/Desktop/data_local/astro_only/m181129_d190111_c001/day_0'
 
 class AstrocytePlotter():
     def __init__(self, output_folder):
@@ -4030,6 +4026,8 @@ class AstrocytePlotter():
         bh_y_d = {}
         x_l = []
         for bh in bh_l:
+            print(bh)
+            print(measure)
             _, x, y_l = self.measure_distribution_plot(astroA_l, bh, measure=measure, num_bins=num_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name)
             x_l.append(x[:-1])
             if confidence:
@@ -4057,6 +4055,8 @@ class AstrocytePlotter():
             return N*(np.exp(-(x/b)))
 
         for i, bh in enumerate(bh_k_l):
+            print(x_l[i])
+            print(bh_y_l[i])
             params, params_covariance = optimize.curve_fit(test_func, x_l[i], bh_y_l[i])
             y_fit = test_func(x_l[i], *params)
 

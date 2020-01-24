@@ -1,10 +1,7 @@
-from importlib import reload  # Python 3.4+ only.
-import h5py
-import os, sys, glob
 import numpy as np
-import plotly.offline as offline
+import os, sys, glob
 from preprocessing import analysis_pp
-from analysis.general_utils import aqua_utils, saving_utils, graph_utils, plotly_utils, general_utils, correlation_utils
+from analysis.general_utils import aqua_utils, saving_utils, plotly_utils, general_utils, correlation_utils
 from scipy.ndimage.filters import gaussian_filter
 import csv
 import math

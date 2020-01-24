@@ -1,13 +1,9 @@
-from importlib import reload  # Python 3.4+ only.
 import numpy as np
-import h5py
 import os, sys, glob
 import scipy
 import scipy.io
-import plotly.offline as offline
 from preprocessing import analysis_pp
-from analysis.general_utils import aqua_utils, saving_utils, graph_utils, plotly_utils, duration_utils, general_utils
-from scipy.stats.stats import power_divergence
+from analysis.general_utils import aqua_utils, saving_utils
 import copy
 
 class AxonAstroAnalyzer():

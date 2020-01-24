@@ -52,8 +52,9 @@ def whiskers_preprocessing(arr):
     whiskers_diff = np.abs(whiskers_proc[1:] - whiskers_proc[:-1])
     whisker_threshold = np.median(whiskers_diff) + 0.5*np.std(whiskers_diff)
 
-    whiskers_final = np.zeros(whiskers_diff.shape)
+    whiskers_final = np.zeros((whiskers_diff.shape[0]))
     whiskers_final[whiskers_diff > whisker_threshold] = 1
+    whiskers_final = np.append(whiskers_final, [whiskers_final[-1]])
 
     return whiskers_final
 
@@ -348,6 +349,7 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
     speed_bin = speed_preprocessing(roi_dict['extra']['speed'])
     speed_values = roi_dict['extra']['speed']
     whisker_bin = whiskers_preprocessing(roi_dict['extra']['whiskers'])
+
     pupil_values = pupil_preprocessing(roi_dict['extra']['pupil'])
 
     #running                 - (frames) when mouse is running
