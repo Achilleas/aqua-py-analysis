@@ -15,11 +15,11 @@ Input:
   2) Run AQuA 
      - **[default - aqua_cmd_custom.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom.m)**
      
-     - **[with bounds - cmd_custom_multi_bound.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m)**
+     - **[with bounds - cmd_custom_multi_bound.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m)**     
      
-    - Preferably use with cell bound (removes events outside bound) use AqUA interface to generate 2 AqUA landmarks (centre, cell bound)
-    - If multiple files, merge result files with 
-      https://github.com/Achilleas/aqua-py-analysis/blob/master/aqua_merge_outputs.ipynb to obtain res.pkl
+     Preferably use with cell bound (removes events outside bound) use AqUA interface to generate 2 AqUA landmarks (centre, cell bound)
+    If multiple files, merge result files with 
+      **[aqua_merge_outputs.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/aqua_merge_outputs.ipynb)**
       
 Part 2:
   1) Pre-processed oscilloscope data concatenated in one .csv file (same framerate)
