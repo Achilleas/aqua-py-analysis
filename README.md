@@ -3,7 +3,7 @@
 Part 1:
 
 Input:
-  1) Movie as .tif file or folder of .tif files
+  1) Registered movie in folder with one or more .tif files
     ex.
       - Proprietary video format files (MDF, Sutter Instruments Inc.) were converted to Tiff using commercial software (MView,       Sutter Instrument)
       - Two-photon microscopy movie of astrocyte recording (30.9Hz) 
@@ -15,7 +15,7 @@ Input:
   2) Run AQuA 
      - **[default - aqua_cmd_custom.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom.m)**
      
-     - **[with bounds_- cmd_custom_multi_bound.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m)**
+     - **[with bounds - cmd_custom_multi_bound.m](https://github.com/Achilleas/aqua-py-analysis/blob/master/AQuA-custom/aqua_cmd_custom_multi_bound.m)**
      
     - Preferably use with cell bound (removes events outside bound) use AqUA interface to generate 2 AqUA landmarks (centre, cell bound)
     - If multiple files, merge result files with 
