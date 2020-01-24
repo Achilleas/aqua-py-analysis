@@ -247,7 +247,6 @@ def plot_scatter_error(x, y, mode='lines', title='scatter', x_title='', y_title=
         params, params_covariance = optimize.curve_fit(test_func, x, means_y)
         y_fit = test_func(x, *params)
         par = [v for v in params]
-        print(par)
         fit_scatter = go.Scatter(
             x=x,
             y=y_fit,
@@ -439,7 +438,6 @@ def plot_scatter_mult_with_avg(x_l, y_l_l, y_mean, name_l, mode='lines', title='
     conf_high_l_l = []
 
     for y_l in y_l_l:
-        print('LENS?', [len(y_v) for y_v in y_l])
         mean_l_l.append([stat_utils.mean_confidence_interval(y_v, confidence=0.95)[0] for y_v in y_l])
 
         if with_stats or confidence:
@@ -550,7 +548,6 @@ def plot_scatter_mult_tree(x, y_main, y_mult, mode_main='lines', mode_mult='mark
                             title='', y_title='', x_title='', fit=False, fit_annotation_pos_fix=1,
                             bin_main_size=1, bin_mult_size=1, opacity=0.1, confidence=False, with_stats=False,
                             y_mult_include=True, confidence_format='lines', bin_type='mean'):
-    print('BIN TYPE', bin_type)
     '''
     x = [len_x]
     y_main = [len_x]
@@ -656,7 +653,6 @@ def plot_scatter_mult_tree(x, y_main, y_mult, mode_main='lines', mode_mult='mark
                 marker=dict(color=colour_conf),
                 line=dict(width=1, color='rgb(66,167,244)', dash='longdash'),
                 showlegend=False)
-            print('Lower bound')
             traces_l.append(lower_bound)
             traces_l.append(upper_bound)
         elif confidence_format == 'bar':
@@ -679,11 +675,9 @@ def plot_scatter_mult_tree(x, y_main, y_mult, mode_main='lines', mode_mult='mark
             name='Average'
         )
     )
-    print('Added trace 1')
 
     #Main avg trace
     if bin_main_size > 1:
-        print('Added trace 2')
         traces_l.append(
             go.Scatter(
                 x=x_avg,
@@ -695,7 +689,6 @@ def plot_scatter_mult_tree(x, y_main, y_mult, mode_main='lines', mode_mult='mark
         )
 
     if y_mult_include:
-        print(y_mult.shape)
         for i in range(y_mult.shape[0]):
             traces_l.append(
                 go.Scatter(
@@ -742,7 +735,6 @@ def plot_scatter_mult_tree(x, y_main, y_mult, mode_main='lines', mode_mult='mark
     fig = go.Figure(data=traces_l, layout=layout)
 
     if with_stats:
-        print('RETURNING HERE???')
         return fig, {'confidence_95' : confidence_l, 'std' : std_l, 'mean' : mean_l, 'x' : (x if bin_mult_size == 1 else x_mult_avg), 'y_all' : y_mult}
     return fig
 
@@ -800,7 +792,7 @@ def plot_scatter_signal_mult(x, y_l, begin_l, end_l, mode='lines', title='scatte
     x2_l = [np.arange(begin_i, end_i) for (begin_i, end_i) in zip(begin_l, end_l)]
     y2_l = [y_l[i][begin_i:end_i] for i, (begin_i, end_i) in enumerate(zip(begin_l, end_l))]
 
-    print([[begin_i, end_i] for (begin_i, end_i) in zip(begin_l, end_l)])
+    #print([[begin_i, end_i] for (begin_i, end_i) in zip(begin_l, end_l)])
     #x_l = [x, x2]
     #y_l = [y, y2]
 
@@ -852,15 +844,13 @@ def plot_contour(arr, title='contour', color_bar_title='', color_scale='Portland
     max_v = np.max(arr)
 
     tick_x = list(np.arange(min_v, max_v, (max_v-min_v) / num_ticks))
-    #print('tick first', tick_x[1])
-    #print('log thingy', -np.log10(tick_x[1]))
 
     if -np.log10(tick_x[1]) > 0:
-        print('Truncating ', int(-np.log10(tick_x[1]))+1)
-        print([v for v in tick_x])
+        #print('Truncating ', int(-np.log10(tick_x[1]))+1)
+        #print([v for v in tick_x])
         tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))+1) for v in tick_x]
     else:
-        print('Truncating', int(-np.log10(tick_x[1])))
+        #print('Truncating', int(-np.log10(tick_x[1])))
         tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))) for v in tick_x]
 
     if tick_x[1] > 10:
@@ -869,7 +859,7 @@ def plot_contour(arr, title='contour', color_bar_title='', color_scale='Portland
     #print('min' ,min_v)
     #print('max', max_v)
     #print('num ticks', num_ticks)
-    print('TICK X final', tick_x)
+    #print('TICK X final', tick_x)
 
     contour = go.Contour(z=arr, x=np.arange(arr.shape[0]), y=np.arange(arr.shape[1]),
                 colorscale=color_scale,
@@ -897,8 +887,8 @@ def plot_contour_threshold(arr, threshold_perc=0.75, set_min_v=None, set_max_v=N
     #            'Reds', 'Blues', 'Picnic', 'Rainbow', 'Portland', 'Jet',
     #            'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis']
     arr = np.copy(arr)
-    print('MAX BEFORE', np.max(arr))
-    print('thresh {}, min {}, max{}'.format(threshold_perc, set_min_v, set_max_v))
+    #print('MAX BEFORE', np.max(arr))
+    #print('thresh {}, min {}, max{}'.format(threshold_perc, set_min_v, set_max_v))
     #In order to set a threshold value, set min and max should be None
     if (threshold_perc is not None) and (set_min_v is None) and (set_max_v is None):
         threshold_val = np.max(arr)*threshold_perc
@@ -917,23 +907,23 @@ def plot_contour_threshold(arr, threshold_perc=0.75, set_min_v=None, set_max_v=N
     if np.sum(arr > max_v) == 0:
         arr[0,0] = max_v
 
-    print('MAX AFTER', np.max(arr))
+    #print('MAX AFTER', np.max(arr))
 
     tick_x = list(np.arange(min_v, max_v, (max_v-min_v) / (num_ticks)))
 
 
     if -np.log10(tick_x[1]) > 0:
-        print('Truncating ', int(-np.log10(tick_x[1]))+1)
-        print([v for v in tick_x])
+        #print('Truncating ', int(-np.log10(tick_x[1]))+1)
+        #print([v for v in tick_x])
         tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))+1) for v in tick_x]
     else:
-        print('Truncating', int(-np.log10(tick_x[1])))
+        #print('Truncating', int(-np.log10(tick_x[1])))
         tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))) for v in tick_x]
 
     if tick_x[1] > 10:
         tick_x = [int(v) for v in tick_x]
 
-    print('TICK X final', tick_x)
+    #print('TICK X final', tick_x)
 
     contour = go.Contour(z=arr, x=np.arange(arr.shape[0]), y=np.arange(arr.shape[1]),
                  colorscale=color_scale,
@@ -1156,13 +1146,13 @@ def plot_point_box_revised(x, y, title='point box', x_title='', y_title='',
     y will be list of lists. index 0 will contain a list of the values of a etc
     '''
 
-    print('x', len(x))
-    print('y', len(y), len(y[0]))
+    #print('x', len(x))
+    #print('y', len(y), len(y[0]))
 
-    for i, (xd, yd) in enumerate(zip(x, y)):
-        print('XD {}'.format(i))
-        print(xd)
-        print(len(yd))
+    #for i, (xd, yd) in enumerate(zip(x, y)):
+    #    print('XD {}'.format(i))
+    #    print(xd)
+    #    print(len(yd))
 
     traces = []
     colour_l = ['rgb(66,244,143)',
@@ -1233,13 +1223,12 @@ def plot_point_box_revised(x, y, title='point box', x_title='', y_title='',
 
     shapes = []
 
-    print('THE MEANS LIST HEREEE', mean_l)
     max_y = np.max([np.max(high_l), np.max([np.max(y_s) for y_s in y])])
     min_y = np.min([np.min(low_l), np.min([np.min(y_s) for y_s in y])])
 
-    print(min_y)
-    print('LOW LIST', low_l)
-    print('HIGH LIST', high_l)
+    #print(min_y)
+    #print('LOW LIST', low_l)
+    #print('HIGH LIST', high_l)
 
 
     for i in range(len(mean_l)):
@@ -1308,7 +1297,6 @@ def plot_point_box_revised(x, y, title='point box', x_title='', y_title='',
                 },
 
             )
-    print('B')
     if lines:
         for i in range(len(y[0])):
             trace_i = go.Scatter(
@@ -1323,7 +1311,6 @@ def plot_point_box_revised(x, y, title='point box', x_title='', y_title='',
                     )
             )
             traces.append(trace_i)
-    print('C')
     layout = go.Layout(
         shapes = shapes,
         title=title,
@@ -1357,8 +1344,6 @@ def plot_point_box_revised(x, y, title='point box', x_title='', y_title='',
     else:
         layout.update(yaxis=dict(range=(min_y*(1.05 if min_y <= 0 else 0.95), max_y*1.05)))
     fig = go.Figure(data=traces, layout=layout)
-
-    print('Returning fig???')
 
     if with_stats:
         return fig, {'x' : x, 'data' : y, 'conf_95' : conf_l, 'std' : std_l, 'mean' : mean_l, 'names' : x}
@@ -1409,8 +1394,6 @@ def plot_multi_point_box(x, y, names, title='', x_title='', y_title='', height=4
     return fig
 
 def plot_violin_duo(x1, x2, y1, y2, title='', x_title='', y_title=''):
-    print('y1', y1)
-    print('y2', y2)
     trace_d = {
         "data": [
             {
@@ -1497,7 +1480,6 @@ def bin_avg_arr(arr, step_size, bin_type='mean'):
     return arr
 
 def apply_fun_axis_fig(fig, fun, axis='x'):
-    #print(fig)
     if axis == 'x':
         for i in range(len(fig['data'])):
             fig['data'][i]['x'] = fun(fig['data'][i]['x'])
