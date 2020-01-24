@@ -1,3 +1,6 @@
+Requirements:
+Python 3.7, Matlab 2019a (also run in Matlab 2017)
+
 # aqua-py-analysis
 
 Part 1:
