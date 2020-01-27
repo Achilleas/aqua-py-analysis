@@ -40,14 +40,14 @@
   | -------------
   | 0.21  |
   | 0.55  |
-  | ...  |
+  | ...   |
   - example
       - Take 8 bit rotary encoder (E6A2, Omron) analog signal from MDF file
-  - Run: **[speed.py](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py)**
+      - Run: **[speed.py](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py)**
   
-  ```
-        python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 --bin_size=97
-  ```
+      ```
+        python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 -- bin_size=97
+      ```
   2. Pre-processed behavioural data (pupil, stick, whiskers) in one .csv file (same framerate)
 
   | pupil (float)  | stick (bool/float) | whiskers (float) |
@@ -55,12 +55,12 @@
   | 84.932  | 0  | 2.15 |
   | 84.851  | 0  | 2.158 |
   | ...  | ...  | ... |
-      - example
-       - Take camera video from MDF
-       - Load ROI manager and set ROIs in ImageJ (pupil, stick, whiskers)
-       - Run script (moving average 10.3Hz and save ROI values) over folder of .tif behaviour videos to obtain their ROI values.
-       - Run **[get_roi_data_avg_only.ijm](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/get_roi_data_avg_only.ijm)** script in ImageJ.
-       - Merge all .csv files (1 per behaviour video) into a single .csv file: **[merge_roi_folders.py](
+    - example
+        - Take camera video from MDF
+        - Load ROI manager and set ROIs in ImageJ (pupil, stick, whiskers)
+        - Run script (moving average 10.3Hz and save ROI values) over folder of .tif behaviour videos to obtain their ROI values.
+        - Run **[get_roi_data_avg_only.ijm](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/get_roi_data_avg_only.ijm)** script in ImageJ.
+        - Merge all .csv files (1 per behaviour video) into a single .csv file: **[merge_roi_folders.py](
         https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/merge_roi_folders.py)**
 
 ## File structure
