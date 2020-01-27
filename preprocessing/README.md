@@ -36,17 +36,17 @@
 ## Oscilloscope, Pupil, Stick, Whisker preprocessing
   1. Pre-processed oscilloscope data concatenated in one .csv file (same framerate)
 
+
   | speed (m/s) |
   | -------------
   | 0.21  |
   | 0.55  |
   | ...  |
-
      - example
       - Take 8 bit rotary encoder (E6A2, Omron) analog signal from MDF file
-      - Run: **[speed.py](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py)**
-      ```python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 --bin_size=97
-      ```
+  - Run: **[speed.py](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py)**
+  
+        python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 --bin_size=97
   2. Pre-processed behavioural data (pupil, stick, whiskers) in one .csv file (same framerate)
 
   | pupil (float)  | stick (bool/float) | whiskers (float) |
@@ -54,7 +54,6 @@
   | 84.932  | 0  | 2.15 |
   | 84.851  | 0  | 2.158 |
   | ...  | ...  | ... |
-
       - example
        - Take camera video from MDF
        - Load ROI manager and set ROIs in ImageJ (pupil, stick, whiskers)
