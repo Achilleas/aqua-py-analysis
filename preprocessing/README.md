@@ -44,7 +44,7 @@
   - example
       - Take 8 bit rotary encoder (E6A2, Omron) analog signal from MDF file
       - Run: **[speed.py](https://github.com/Achilleas/aqua-py-analysis/blob/master/preprocessing/speed.py)**
-  
+
       ```
         python speed.py --input_filepath=$load_path/oscilloscope.txt --output_filepath=$save_path --wheel_radius=7.5 -- bin_size=97
       ```
