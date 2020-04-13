@@ -41,7 +41,8 @@ class AstrocytePlotter():
                 'signal_proportion_delays', 'signal_stick_run_samples', 'splits_split_split',
                 'triplet_bar', 'size_v_time_corr',
                 'behaviour_heatmaps_threshold_with_random',
-                'split_behaviour_grids']
+                'split_behaviour_grids',
+                'size_histogram_bh_comparison_individual', 'amplitude_histogram_bh_comparison_individual', 'duration_histogram_bh_comparison_individual',]
 
         for p in paths:
             try:
@@ -186,6 +187,7 @@ class AstrocytePlotter():
             'control',
             'outliers',
             'behaviour_ratios',
+            'top_average_values',
             'split_correlation_all',
             'splits_self_all'
         ]
@@ -407,6 +409,7 @@ class AstrocytePlotter():
             plt.savefig(os.path.join(path, '{}.png'.format(kind)))
         '''
 
+        '''
         print('Split BEHAVIOUR GRIDS...')
         n_chunks = 3
         for bh in ['default', 'running', 'rest']:
@@ -415,7 +418,7 @@ class AstrocytePlotter():
             for i, event_grid_split in enumerate(event_grid_splits):
                 plot = plotly_utils.plot_contour(event_grid_split, title='{}-split {}/{}'.format(bh, i+1, len(event_grid_splits)))
                 saving_utils.save_plotly_fig(plot, os.path.join(path, 'bh_{}-split_{}-chunks_{}'.format(bh,i,n_chunks)))
-
+        '''
         '''
         print('HEATMAPS V2_2... (each astro day scaled with random)')
         for dff_mode in ['False']:
@@ -431,7 +434,70 @@ class AstrocytePlotter():
                     saving_utils.save_plotly_fig(contour_random, os.path.join(path, 'bh_{}-dff_{}-random_{}'.format(bh, dff_mode, i)))
         '''
 
+        bh_l = ['rest', 'stick_rest', 'running', 'stick_run_ind_15']
+        #Area: None, 60, num_bins = 10
+        #Duration: None, 30, num_bins = 10
+        #dff :  0.6, 5, num_bins = 20
+        print('Comparing behaviour distribution plots for SINGLE...')
+        for n_bins in [10, 20]:
+            print('NUM BINS:', n_bins)
+            for behaviour_l in [bh_l]: #, ['rest', 'running'], ['running', 'stick'], ['rest', 'stick_rest'], ['running', 'stick_run_ind_15']]:
+                for measure, min_measure, max_measure in [
+                    #['area', None, 60],
+                    #['dffMax2', 0.6, 5],
+                    ['duration', None, 30],
+                ]:
 
+                    for confidence in [True]:
+                        measure_name = aqua_utils.get_measure_names(measure)
+                        path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence))
+                        plot, stats_d = self.measure_distribution_bh_compare_plot([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=confidence, with_stats=True, mode='MOA')
+
+                        if measure == 'duration':
+                            plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
+
+                        saving_utils.save_pth_plt_l_log([plot], [path], axis='x')
+                        saving_utils.save_pth_plt_l_log([plot], [path], axis='y')
+                        #Save results in text file
+                        for i, name in enumerate(stats_d['names']):
+                            #Create folder
+                            data_folder_path = path
+                            try:
+                                os.makedirs(path)
+                            except:
+                                pass
+                            temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+                            saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                            np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(name)), np.array(temp_d['data']).transpose(), delimiter=",")
+
+                    for confidence in [True]:
+                        for with_log in [False, True]:
+                            measure_name = aqua_utils.get_measure_names(measure)
+                            plot, stats_d = self.measure_distribution_bh_compare_plot_exponential_fit([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=False, with_stats=True, with_log=with_log)
+                            path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}_EXPFIT-withlog={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence, with_log))
+                            if measure == 'duration':
+                                plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
+
+                            #Save results in text file
+                            for i, name in enumerate(stats_d['names']):
+                                #Create folder
+                                data_folder_path = path
+                                try:
+                                    os.makedirs(path)
+                                except:
+                                    pass
+                                temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+
+                                if len(name.split('__')) == 2:
+                                    tx_name = name.split('__')[0] + '_expfit'
+                                else:
+                                    tx_name = name
+                                print('TX NAME', name)
+                                saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(tx_name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                                np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(tx_name)), np.array(temp_d['data']).transpose(), delimiter=",")
+                            saving_utils.save_plotly_fig(plot, path)
+
+                            print('THE STAT HERE?', stats_d)
 
 #--------#--------#--------#--------#--------#--------#--------#--------#--------#--------
     #Experiment_id/days
@@ -622,7 +688,63 @@ class AstrocytePlotter():
         DataFrame(astro_ratios_np, columns=c, index=r).to_csv(behaviour_ratios_csv_path)
         '''
 
+        print('Saving results of average maximum characteristic values (e.g. Average maximum duration over all astrocyte recordings)')
 
+        measure_l = ['area', 'dffMax2', 'duration']
+        measure_names_l = ['area', 'amplitude', 'duration']
+        bh_l = ['rest', 'stick_rest', 'running', 'stick_run_ind_15']
+
+        settings = ['max', 'meantop10', 'mediantop10', 'meantop5', 'mediantop5']
+        settings_d_i = {setting: i for i, setting in enumerate(settings)}
+        np_d = [np.zeros([len(astroA_l), len(bh_l)]) for i in range(len(settings))]
+
+        max_np = np.zeros([len(astroA_l), len(bh_l)])
+        r = [astroA.id for astroA in astroA_l]
+
+
+        #Dictionary of events for each behaviour for each astrocyte.
+        #events_d_d['astro_id']['behaviour'] = event ids of astro id
+        events_d_d = {}
+        for astroA in astroA_l:
+            d = {'default': astroA.indices_d['default']}
+            for bh in bh_l:
+                if bh in astroA.indices_d:
+                    d[bh] = astroA.indices_d[bh]
+            events_d_d[astroA.print_id] = aqua_utils.get_event_subsets(d, astroA.res_d)
+
+        base_path = os.path.join(output_experiment_path_all_comparison, 'data', 'top_average_values')
+
+        for m_i, measure in enumerate(measure_l):
+            for i, astroA in enumerate(astroA_l):
+                measure_vals_all = astroA.res_d[measure]
+                bh_events_d = events_d_d[astroA.print_id]
+
+                for j, bh in enumerate(bh_l):
+                    if bh in bh_events_d:
+                        #Measure values corresponding to given astrocyte & measure & behaviour
+                        bh_measure_vals = measure_vals_all[bh_events_d[bh]]
+
+                        bh_measure_vals_s = np.sort(bh_measure_vals)[::-1]
+                        top10 = bh_measure_vals_s[:len(bh_measure_vals_s)//10]
+                        top5 = bh_measure_vals_s[:len(bh_measure_vals_s)//20]
+
+                        print(astroA.print_id)
+                        if astroA.print_id == 'm181129_d190222_c005_day_0' and bh == 'stick_rest':
+                            print('A')
+                            print(top5)
+                        if astroA.print_id == 'm181129_d190222_c005_day_3' and bh == 'stick_rest':
+                            print('B')
+                            print(top5)
+
+                        np_d[settings_d_i['max']][i, j] = bh_measure_vals_s[0]
+
+                        np_d[settings_d_i['meantop10']][i, j] = np.mean(top10)
+                        np_d[settings_d_i['meantop5']][i, j] = np.mean(top5)
+
+                        np_d[settings_d_i['mediantop10']][i, j] = np.median(top10)
+                        np_d[settings_d_i['mediantop5']][i, j] = np.median(top5)
+            for setting in settings_d_i.keys():
+                DataFrame(np_d[settings_d_i[setting]], columns=bh_l, index=r).to_csv(os.path.join(base_path, 'measure={}-type={}.csv'.format(measure_names_l[m_i], setting)))
 
         '''
         measure_l = ['time_s', 'dffMax2', 'area']
@@ -685,77 +807,72 @@ class AstrocytePlotter():
         '''
 
         '''
+        #Area: None, 60, num_bins = 10
+        #Duration: None, 30, num_bins = 10
+        #dff :  0.6, 5, num_bins = 20
+
         print('Comparing behaviour distribution plots...')
-        for n_bins in [10, 20, 40, 80]:
+        for n_bins in [10, 20]:
             print('NUM BINS:', n_bins)
-            for behaviour_l in [bh_l, ['rest', 'running'], ['running', 'stick'], ['rest', 'stick_rest'], ['running', 'stick_run_ind_15']]:
+            for behaviour_l in [bh_l]: #, ['rest', 'running'], ['running', 'stick'], ['rest', 'stick_rest'], ['running', 'stick_run_ind_15']]:
                 for measure, min_measure, max_measure in [
-                    #['area', None, None],
-                    #['area', None, 10],
-                    #['area', None, 20],
-                    #['area', None, 60],
-                    #['area', None, 100],
-                    #['area', 5, 60],
-                    ['area', 3, 100],
-                    #['dffMax2', None, None],
-                    #['dffMax2', None, 2],
-                    #['dffMax2', 0.6, 2],
-                    #['dffMax2', None, 5],
-                    #['dffMax2', 0.6, 5],
-                    #['duration', None, None],
-                    #['duration', None, 30],
-                    #['duration', None, 100]
+                    ['area', None, 60],
+                    ['dffMax2', 0.6, 5],
+                    ['duration', None, 30],
                 ]:
 
                     for confidence in [True]:
-                        measure_name = aqua_utils.get_measure_names(measure)
-                        path = os.path.join(output_experiment_path_all_comparison, 'plots', '{}_histogram_bh_comparison'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence))
-                        plot, stats_d = self.measure_distribution_bh_compare_plot(astroA_l, behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=confidence, with_stats=True)
+                        for mode in ['MOA', 'MOE']:
+                            measure_name = aqua_utils.get_measure_names(measure)
+                            path = os.path.join(output_experiment_path_all_comparison, 'plots', '{}_histogram_bh_comparison'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}-mode={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence, mode))
+                            plot, stats_d = self.measure_distribution_bh_compare_plot(astroA_l, behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=confidence, with_stats=True, mode=mode)
 
-                        if measure == 'duration':
-                            plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA_l[0].fr, axis='x')
+                            if measure == 'duration':
+                                plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA_l[0].fr, axis='x')
 
-                        saving_utils.save_pth_plt_l_log([plot], [path])
+                            saving_utils.save_pth_plt_l_log([plot], [path], axis='x')
+                            saving_utils.save_pth_plt_l_log([plot], [path], axis='y')
 
-                        #Save results in text file
-                        for i, name in enumerate(stats_d['names']):
-                            #Create folder
-                            data_folder_path = path
-                            try:
-                                os.makedirs(path)
-                            except:
-                                pass
-                            temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
-                            saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
-                            np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(name)), np.array(temp_d['data']).transpose(), delimiter=",")
+                            #Save results in text file
+                            for i, name in enumerate(stats_d['names']):
+                                #Create folder
+                                data_folder_path = path
+                                try:
+                                    os.makedirs(path)
+                                except:
+                                    pass
+                                temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+                                saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                                np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(name)), np.array(temp_d['data']).transpose(), delimiter=",")
 
                     for confidence in [True]:
-                        measure_name = aqua_utils.get_measure_names(measure)
-                        plot, stats_d = self.measure_distribution_bh_compare_plot_exponential_fit(astroA_l, behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=False, with_stats=True)
-                        path = os.path.join(output_experiment_path_all_comparison, 'plots', '{}_histogram_bh_comparison'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}_EXPFIT'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence))
-                        if measure == 'duration':
-                            plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA_l[0].fr, axis='x')
+                        for with_log in [False, True]:
+                            measure_name = aqua_utils.get_measure_names(measure)
+                            plot, stats_d = self.measure_distribution_bh_compare_plot_exponential_fit(astroA_l, behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=False, with_stats=True, with_log=with_log)
+                            path = os.path.join(output_experiment_path_all_comparison, 'plots', '{}_histogram_bh_comparison'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}_EXPFIT-withlog={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence, with_log))
+                            if measure == 'duration':
+                                plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA_l[0].fr, axis='x')
 
-                        #Save results in text file
-                        for i, name in enumerate(stats_d['names']):
-                            #Create folder
-                            data_folder_path = path
-                            try:
-                                os.makedirs(path)
-                            except:
-                                pass
-                            temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+                            #Save results in text file
+                            for i, name in enumerate(stats_d['names']):
+                                #Create folder
+                                data_folder_path = path
+                                try:
+                                    os.makedirs(path)
+                                except:
+                                    pass
+                                temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
 
-                            if len(name.split('__')) == 2:
-                                tx_name = name.split('__')[0] + '_expfit'
-                            else:
-                                tx_name = name
-                            print('TX NAME', name)
-                            saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(tx_name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
-                            np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(tx_name)), np.array(temp_d['data']).transpose(), delimiter=",")
-                        saving_utils.save_plotly_fig(plot, path)
-
-                        print('THE STAT HERE?', stats_d)
+                                if len(name.split('__')) == 2:
+                                    tx_name = name.split('__')[0] + '_expfit'
+                                else:
+                                    tx_name = name
+                                print('TX NAME', name)
+                                saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(tx_name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                                np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(tx_name)), np.array(temp_d['data']).transpose(), delimiter=",")
+                            saving_utils.save_plotly_fig(plot, path)
+                            saving_utils.save_pth_plt_l_log([plot], [path], axis='y')
+                            print('THE STAT HERE?', stats_d)
         '''
         '''
         print('Violin plots...')
@@ -813,7 +930,7 @@ class AstrocytePlotter():
 
         save_pth_plt_l_log(plt_l, pth_l, axis='y')
         '''
-
+        '''
         print('Splits SELF ALL')
         #STEP 1
         #Take only long duration astrocytes
@@ -847,6 +964,7 @@ class AstrocytePlotter():
         df_mean.to_csv(path + '-mean_and_CI.csv')
 
         saving_utils.save_plotly_fig(fig, path)
+        '''
         '''
         print('HEATMAPS V2... (astro days scaled the same (to minimum maximum scale of the 2))')
         for astroA_pair in astroA_l_pairs:
@@ -3959,9 +4077,12 @@ class AstrocytePlotter():
         return plotly_utils.plot_point_box_revised(x, y, margin_b=400)
 
 
-    def measure_distribution_plot(self, astroA_l, bh, measure, num_bins=10, min_measure=0, max_measure=0, measure_name=''):
+    def measure_distribution_plot(self, astroA_l, bh, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', mode='MOA'):
         '''
         Default min is 0
+
+        MOA = mean over astrocytes
+        MOE = mean over 'all' events over all astrocytes
         '''
         measure_d = {}
         for astroA in astroA_l:
@@ -3969,24 +4090,51 @@ class AstrocytePlotter():
                 measure_d[astroA.print_id] = astroA.res_d[measure][astroA.event_subsets[bh]]
 
         measure_counts_d = {}
+        all_events_measure_l = []
+
+        #No events...
+        if np.sum([len(measure_d[k]) for k in measure_d.keys()]) == 0:
+            return None, None, None
+
+        print('LENGHTS?')
+        print([len(measure_d[k]) for k in measure_d.keys()])
+        #Get min and max range to filter (if not given just take min and max values of event value measures)
+        if min_measure is None:
+            min_range = np.min([np.min(measure_d[k]) for k in measure_d.keys()])
+        else:
+            min_range = min_measure
+
+        if max_measure is None:
+            max_range = np.max([np.max(measure_d[k]) for k in measure_d.keys()])
+        else:
+            max_range = max_measure
+
+        if measure == 'duration':
+            if ((max_range - min_range) % 2) == 1:
+                max_range += 1
+            num_bins_x = np.int((max_range - min_range)/ 2)
+        else:
+            num_bins_x = num_bins
 
         for k in measure_d.keys():
-            if min_measure is not None:
-                measure_d[k] = measure_d[k][measure_d[k] >= min_measure]
-                min_range = min_measure
-            if max_measure is not None:
-                measure_d[k] = measure_d[k][measure_d[k] <= max_measure]
-                max_range = max_measure
+            measure_d[k] = measure_d[k][measure_d[k] >= min_range]
+            measure_d[k] = measure_d[k][measure_d[k] <= max_range]
 
-            if min_measure is None:
-                min_range = np.min([np.min(measure_d[k]) for k in measure_d.keys()])
-            if max_measure is None:
-                max_range = np.max([np.max(measure_d[k]) for k in measure_d.keys()])
+            #If mean over astrocytes -> take histogram for each individual astrocyte
+            if mode == 'MOA':
+                measure_counts_d[k], bins_arr = np.histogram(measure_d[k], bins=num_bins_x, range=(min_range, max_range))
+                measure_counts_d[k] = measure_counts_d[k] / np.sum(measure_counts_d[k])
+            #If mean over events -> append filtered events of current astrocyte
+            elif mode == 'MOE':
+                all_events_measure_l.extend(measure_d[k])
 
-            measure_counts_d[k], bins_arr = np.histogram(measure_d[k], bins=num_bins, range=(min_range, max_range))
-            measure_counts_d[k] = measure_counts_d[k] / np.sum(measure_counts_d[k])
+        #Mean over events, now produce a histogram
+        if mode == 'MOE':
+            measure_counts_d['all_events'], bins_arr = np.histogram(all_events_measure_l, bins=num_bins_x, range=(min_range,max_range))
+            measure_counts_d['all_events'] = measure_counts_d['all_events'] / np.sum(measure_counts_d['all_events'])
 
-        y_l = [[measure_counts_d[k][i] for k in measure_counts_d.keys()] for i in range(num_bins)]
+        #In the case of MOE we have only 1 key: all events, so the list is simply [[0.1, 0.4, 0.3, ...]] values of 1 histogram
+        y_l = [[measure_counts_d[k][i] for k in measure_counts_d.keys()] for i in range(num_bins_x)]
         x = bins_arr
 
         x_title = measure_name
@@ -3996,14 +4144,18 @@ class AstrocytePlotter():
             #TODO
             x_title += ''
         fig = plotly_utils.plot_scatter_error(x, y_l, mode='lines', title='{}-{} distribution'.format(bh, measure_name), x_title=measure_name, y_title='')
-
+        print('THE X VALUES', x)
         return fig, x, y_l
 
-    def measure_distribution_bh_compare_plot(self, astroA_l, bh_l, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', confidence=True, with_stats=True):
+    def measure_distribution_bh_compare_plot(self, astroA_l, bh_l, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', confidence=True, with_stats=True, mode='MOA'):
         bh_y_d = {}
         x_l = []
         for bh in bh_l:
-            _, x, y_l = self.measure_distribution_plot(astroA_l, bh, measure=measure, num_bins=num_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name)
+            print('BH', bh)
+            _, x, y_l = self.measure_distribution_plot(astroA_l, bh, measure=measure, num_bins=num_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, mode=mode)
+            if x is None:
+                print('BH IS NONE for ', bh, astroA_l[0].print_id)
+                continue
             x_l.append(x)
             if confidence:
                 bh_y_d[bh] = y_l
@@ -4029,6 +4181,8 @@ class AstrocytePlotter():
             print(bh)
             print(measure)
             _, x, y_l = self.measure_distribution_plot(astroA_l, bh, measure=measure, num_bins=num_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name)
+            if x is None:
+                continue
             x_l.append(x[:-1])
             if confidence:
                 bh_y_d[bh] = y_l

@@ -120,18 +120,22 @@ def save_pth_plt_l_log(plt_l, pth_l, axis='x'):
             save_plotly_fig(plt_copy, pth+'_log', x_title=plt_copy['layout']['xaxis']['title']['text'] + '-log')
         else:
             plotly_utils.apply_fun_axis_fig(plt_copy, lambda x : np.log(x), axis='y',)
-            print(plt_copy)
-
+            print('PLT COPY??', plt_copy)
+            print('IS RANGEI N??', 'range' in plt_copy['layout']['yaxis'])
+            print('ISsdasf RANGEI N??', 'rangeadsf' in plt_copy['layout']['yaxis'])
+            print(plt_copy['layout']['yaxis']['range'], '???')
             if 'range' in plt_copy['layout']['yaxis']:
-                range_0 = plt_copy['layout']['yaxis']['range'][0]
-                range_1 = plt_copy['layout']['yaxis']['range'][1]
-                if range_0 is not None:
-                    range_0 = np.log(range_0)
-                if range_1 is not None:
-                    range_1 = np.log(range_1)
-                plt_copy['layout']['yaxis']['range'] = [range_0, range_1]
+                if plt_copy['layout']['yaxis']['range'] is not None:
+                    print('LAOYT??', plt_copy['layout'])
+                    range_0 = plt_copy['layout']['yaxis']['range'][0]
+                    range_1 = plt_copy['layout']['yaxis']['range'][1]
+                    if range_0 is not None:
+                        range_0 = np.log(range_0)
+                    if range_1 is not None:
+                        range_1 = np.log(range_1)
+                    plt_copy['layout']['yaxis']['range'] = [range_0, range_1]
 
             if plt_copy['layout']['yaxis']['title']['text'] is None:
-                save_plotly_fig(plt_copy, pth+'_log')
+                save_plotly_fig(plt_copy, pth+'_ylog')
             else:
-                save_plotly_fig(plt_copy, pth+'_log', y_title=plt_copy['layout']['yaxis']['title']['text'] + '-log')
+                save_plotly_fig(plt_copy, pth+'_ylog', y_title=plt_copy['layout']['yaxis']['title']['text'] + '-log')
