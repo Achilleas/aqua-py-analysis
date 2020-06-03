@@ -644,6 +644,7 @@ def get_measure_names(m_l):
     if isinstance(m_l, str):
         m_l = [m_l]
 
+    print('ML??', m_l)
     mn_l = []
     for m in m_l:
         if m == 'area':
@@ -652,8 +653,10 @@ def get_measure_names(m_l):
             mn_l.append('amplitude')
         elif m == 'duration':
             mn_l.append('duration')
-        elif mm == 'time':
+        elif m == 'time':
             mn_l.append('time')
+        elif m == 'time_s' :
+            mn_l.append('time (s)')
         else:
             raise NotImplementedError
     if len(mn_l) == 1:

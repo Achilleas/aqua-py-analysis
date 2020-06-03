@@ -14,6 +14,7 @@ from pandas import DataFrame
 from scipy import optimize
 import pandas as pd
 import matplotlib.pyplot as plt
+from collections import deque
 
 class AstrocytePlotter():
     def __init__(self, output_folder):
@@ -246,7 +247,8 @@ class AstrocytePlotter():
 
             for j in range(min(10, len(sample_figs[2]))):
                 saving_utils.save_plotly_fig(sample_figs[2][j], os.path.join(stick_run_sample_path, '{}-signal_{}'.format(i, j)))
-
+        '''
+        '''
         print('Plotting behaviour heatmaps...')
         #Behaviour heatmaps
         fig_heatmap_grids, fig_heatmap_dff_grids = self.get_behaviour_contour_plots(astroA)
@@ -254,7 +256,8 @@ class AstrocytePlotter():
         for k in fig_heatmap_grids.keys():
             saving_utils.save_plotly_fig(fig_heatmap_grids[k], os.path.join(heatmap_grid_base_path, k))
             saving_utils.save_plotly_fig(fig_heatmap_dff_grids[k], os.path.join(heatmap_grid_base_path, k + 'dff'))
-
+        '''
+        '''
         print('Plotting behaviour activity bar plot...')
         behaviour_activity_path = os.path.join(output_experiment_path, 'plots', 'behaviour_activity', 'activity')
         fig_behaviour_activity = self.get_behaviour_activity_plot(astroA)
@@ -433,7 +436,7 @@ class AstrocytePlotter():
                 for i, contour_random in enumerate(d['contour_random']):
                     saving_utils.save_plotly_fig(contour_random, os.path.join(path, 'bh_{}-dff_{}-random_{}'.format(bh, dff_mode, i)))
         '''
-
+        '''
         bh_l = ['rest', 'stick_rest', 'running', 'stick_run_ind_15']
         #Area: None, 60, num_bins = 10
         #Duration: None, 30, num_bins = 10
@@ -498,6 +501,181 @@ class AstrocytePlotter():
                             saving_utils.save_plotly_fig(plot, path)
 
                             print('THE STAT HERE?', stats_d)
+        '''
+        '''
+        #Every 60 seconds, whole vid
+        with_donwsample = True
+        downsample_length = int(astroA.fr * 60)
+        second_length = astroA.fr
+        bh_l = ['default', 'rest', 'running']
+        end_t = -1
+        start_t = 0
+        for bh in bh_l:
+
+            save_base_path = os.path.join(output_experiment_path, 'plots', 'video_plots-{}-d{}-e{}'.format(bh, downsample_length, end_t))
+            try:
+                os.makedirs(save_base_path)
+            except:
+                print('Folder exists')
+            self.make_event_appended_video(astroA,
+                                        bh=bh,
+                                        start_t=start_t,
+                                        end_t=end_t,
+                                        downsample_length=downsample_length,
+                                        save_base_path=save_base_path)
+        '''
+        '''
+        #Every 2 seconds, first 120 seconds
+        with_donwsample = True
+        downsample_length = int(astroA.fr * 2)
+        end_t = int(1200 * astroA.fr)
+        start_t = 0
+        second_length = astroA.fr
+        #bh_l = ['default', 'rest', 'running']
+        bh_l = ['default', 'rest', 'running']
+        for bh in bh_l:
+            save_base_path = os.path.join(output_experiment_path, 'plots', 'video_plots-{}-d{}-e{}'.format(bh, downsample_length, end_t))
+            try:
+                os.makedirs(save_base_path)
+            except:
+                print('Folder exists')
+            self.make_event_appended_video(astroA,
+                                        bh=bh,
+                                        start_t=start_t,
+                                        end_t=end_t,
+                                        downsample_length=downsample_length,
+                                        save_base_path=save_base_path)
+        '''
+        '''
+        bh_l = ['default', 'rest', 'running']
+        for bh in bh_l:
+            end_t = int(120*astroA.fr)
+            time_sorted_events_trunc = sorted((i for i,e in enumerate(astroA.res_d['tEnd']) if (e < frame_max)))
+            save_base_path = os.path.join(output_experiment_path, 'plots', 'video_plots_precise-{}-d{}-e{}'.format(bh, downsample_length, end_t))
+            downsample_length = int(astroA.fr * 2)
+            self.make_event_appended_video_precise(astroA,
+                                                    event_l=time_sorted_events_trunc,
+                                                    end_t=end_t,
+                                                    downsample_length=downsample_length,
+                                                    save_base_path=save_base_path)
+        '''
+
+        bh_l = ['rest', 'running']
+        for bh in bh_l:
+            start_t = 0
+            end_t = int(1200 * astroA.fr)
+            downsample_length = int(astroA.fr * 2)
+            save_base_path = os.path.join(output_experiment_path, 'plots', 'video_plots_bh_frames-{}-d{}-e{}'.format(bh, downsample_length, end_t))
+            try:
+                os.makedirs(save_base_path)
+            except:
+                print('Folder exists')
+            self.make_event_appended_video_bh_frames(astroA,
+                                bh=bh,
+                                start_t=start_t,
+                                end_t=end_t,
+                                downsample_length=downsample_length,
+                                save_base_path=save_base_path)
+
+
+    def make_event_appended_video_bh_frames(self, astro, bh, start_t=0, end_t=-1, downsample_length=60, save_base_path=''):
+        curr_indices = astro.indices_d[bh][start_t:end_t]
+        if len(curr_indices) % downsample_length != 0:
+            curr_indices_fix = curr_indices[:-(len(curr_indices) % downsample_length)]
+        else:
+            curr_indices_fix = curr_indices
+        num_splits = len(curr_indices_fix) // downsample_length
+        curr_indices_split = {i : curr_indices_fix[i*downsample_length:(i+1)*downsample_length] for i in range(num_splits)}
+        curr_indices_split['default'] = astro.indices_d['default']
+        bh_event_subsets = aqua_utils.get_event_subsets(curr_indices_split, astro.res_d)
+
+        x2d_all = np.zeros([astro.input_shape[0], astro.input_shape[1]])
+        for i in range(num_splits):
+            print(i, '/', num_splits)
+            x2d = aqua_utils.get_event_grid_from_x2D(astro.res_d['x2D'][bh_event_subsets[i]], (astro.input_shape[0], astro.input_shape[1]))
+            x2d_all = x2d_all + x2d
+            x2d_all_normalized = np.copy(x2d_all) / ((i+1) * (downsample_length)) * astro.minute_frames
+            #Linearly rescale 0-1
+            x2d_all_normalized = (x2d_all_normalized - np.min(x2d_all_normalized)) / (np.max(x2d_all_normalized) - np.min(x2d_all_normalized))
+            fig = plotly_utils.plot_contour(x2d_all_normalized, title='', tick_x=[0.2, 0.4, 0.6, 0.8])
+            saving_utils.save_plotly_fig(fig, os.path.join(save_base_path, '{:05d}'.format(i)), save_svg=False)
+
+
+    def make_event_appended_video(self, astro, bh='default', start_t=0, end_t=-1, downsample_length=60, save_base_path=''):
+        # Create array of (end_t - start_t) values consisting of event indices (lists) inside each frame
+        #Time sorted events [[time, event_id], ..] sorted by time
+        with_downsample = False if downsample_length == 1 else True
+
+        if end_t == -1:
+            end_t = astro.total_indices
+        time_sorted_events = deque(sorted((e,i) for i,e in enumerate(astro.res_d['tBegin'][astro.event_subsets[bh]])))
+        #Populate events over time: for each frame we have a list of event indices starting then
+        events_ot_l = []
+
+        for t in range(start_t, end_t):
+            events_ot_l.append([])
+            #As long as first element has same time, we pop to add to our list
+            while(len(time_sorted_events) != 0 and t == time_sorted_events[0][0]):
+                events_ot_l[t].append(time_sorted_events.popleft()[1])
+
+        #################################################################
+        #Downsample
+        if with_downsample:
+            new_events_ot_l = general_utils.merge_l_l(events_ot_l, downsample_length)
+        else:
+            # copy it, not really need to
+            new_events_ot_l = [ev for ev in events_ot_l]
+
+        # Generate plots over time
+        x2d_all = np.zeros([astro.input_shape[0], astro.input_shape[1]])
+        for i, segment_events_l in enumerate(new_events_ot_l):
+            x2d = aqua_utils.get_event_grid_from_x2D(astro.res_d['x2D'][segment_events_l], (astro.input_shape[0], astro.input_shape[1]))
+            x2d_all = x2d_all + x2d
+            #Normalize
+            x2d_all_normalized = np.copy(x2d_all) / ((i+1) * (downsample_length if with_downsample else 1)) * astro.minute_frames
+            #Linearly rescale 0-1
+            x2d_all_normalized = (x2d_all_normalized - np.min(x2d_all_normalized)) / (np.max(x2d_all_normalized) - np.min(x2d_all_normalized))
+            fig = plotly_utils.plot_contour(x2d_all_normalized, title='', tick_x=[0.2, 0.4, 0.6, 0.8])
+            saving_utils.save_plotly_fig(fig, os.path.join(save_base_path, '{:05d}'.format(i)), save_svg=False)
+
+    #Pass event list to choose which events. E.g. events in first 2 minutes
+    #Slow but potentially prettier method. You can see each individual event its duration
+    def make_event_appended_video_precise(self, astro_curr, event_l, end_t, downsample_length, save_base_path):
+        dim_1 = astro_curr.input_shape[0]
+        dim_2 = astro_curr.input_shape[1]
+        #dim_3 = np.sum([x[2] for x in astro_curr.input_shape_l])
+        dim_3 = end_t
+        a = np.zeros([dim_1, dim_2, dim_3])
+
+        for i, event in enumerate(astro_curr.res_d['x3D'][event_l]):
+            print(i)
+            unraveled = np.unravel_index(event, [dim_1, dim_2, dim_3], order='F')
+
+            begin_time = np.min(unraveled[2])
+            end_time = np.max(unraveled[2])
+
+            added_arr = np.zeros([dim_1, dim_2])
+
+            for u_i in range(len(unraveled[0])):
+                c_0 = unraveled[0][u_i]
+                c_1 = unraveled[1][u_i]
+                t = unraveled[2][u_i]
+                #print('begin {} end {}'.format(begin_time, end_time))
+                if added_arr[c_0, c_1] == 1:
+                    continue
+                a[c_0, c_1, t:] += 1
+                added_arr[c_0, c_1] = 1
+        return a
+
+        for i in range(a_3d.shape[2] // (downsample_length if with_downsample else 1)):
+            print(i)
+            x2d = np.sum(a_3d[:, :, i*downsample_length:(i+1)*downsample_length], axis=2)
+            #Normalize
+            x2d_all_normalized = np.copy(x2d) / ((i+1) * (downsample_length if with_downsample else 1)) * astro_curr.minute_frames
+            #Linearly rescale 0-1
+            x2d_all_normalized = (x2d_all_normalized - np.min(x2d_all_normalized)) / (np.max(x2d_all_normalized) - np.min(x2d_all_normalized))
+            fig = plotly_utils.plot_contour(x2d_all_normalized, title='', tick_x=[0.2, 0.4, 0.6, 0.8])
+            saving_utils.save_plotly_fig(fig, os.path.join(save_base_path, '{:05d}'.format(i)), save_svg=False)
 
 #--------#--------#--------#--------#--------#--------#--------#--------#--------#--------
     #Experiment_id/days
@@ -687,7 +865,7 @@ class AstrocytePlotter():
         behaviour_ratios_csv_path = os.path.join(output_experiment_path_all_comparison, 'data', 'behaviour_ratios', 'ratios.csv')
         DataFrame(astro_ratios_np, columns=c, index=r).to_csv(behaviour_ratios_csv_path)
         '''
-
+        '''
         print('Saving results of average maximum characteristic values (e.g. Average maximum duration over all astrocyte recordings)')
 
         measure_l = ['area', 'dffMax2', 'duration']
@@ -745,7 +923,7 @@ class AstrocytePlotter():
                         np_d[settings_d_i['mediantop5']][i, j] = np.median(top5)
             for setting in settings_d_i.keys():
                 DataFrame(np_d[settings_d_i[setting]], columns=bh_l, index=r).to_csv(os.path.join(base_path, 'measure={}-type={}.csv'.format(measure_names_l[m_i], setting)))
-
+        '''
         '''
         measure_l = ['time_s', 'dffMax2', 'area']
         measure_names = ['Duration(s)', 'Amplitude', 'Area']
@@ -1069,7 +1247,7 @@ class AstrocytePlotter():
 
 
         '''
-        """
+
         print('--------------------------------------------------------------------------------------------------')
         print('Distribution of pixel values real vs fake...')
         path = os.path.join(output_experiment_path_all_comparison, 'plots', 'pixel_distribution')
@@ -1084,7 +1262,8 @@ class AstrocytePlotter():
             grid_flat_nz = grid_flat[grid_flat != 0]
 
             hist, bin_edges = np.histogram(grid_flat_nz, bins=20, range=(0,1), density=True)
-
+            hist = hist * (bin_edges[1] - bin_edges[0])
+            print('HIST SUM', np.sum(hist))
             x_l = bin_edges[:-1]
             y_l.append(hist)
 
@@ -1103,6 +1282,7 @@ class AstrocytePlotter():
         df_data.to_csv(plot_path + '-data.csv')
         df_stats.to_csv(plot_path +'-stats.csv')
 
+
         sample_l_all = []
         for astroA in astroA_l:
             d = self.get_individual_heatmaps_threshold_scaled(astroA, bh='default', threshold=1, num_samples=1, dff_mode=False, with_arr=True)
@@ -1118,6 +1298,8 @@ class AstrocytePlotter():
             #Normalize values to 1
             grid_flat_nz /= np.max(grid_flat_nz)
             hist, bin_edges = np.histogram(grid_flat_nz, bins=20, range=(0,1), density=True)
+            hist = hist * (bin_edges[1] - bin_edges[0])
+            print('HIST SUM', np.sum(hist))
             x_l = bin_edges[:-1]
             y_l.append(hist)
 
@@ -1137,7 +1319,7 @@ class AstrocytePlotter():
         df_data.to_csv(plot_path + '-data.csv')
         df_stats.to_csv(plot_path +'-stats.csv')
         print('--------------------------------------------------------------------------------------------------')
-        """
+
         '''
         print('SINGLE BAR CHART OF BEHAVIOURS (REST, RUN) of all astrocytes')
         names_l = ['amplitude', 'size', 'duration']
@@ -4077,7 +4259,7 @@ class AstrocytePlotter():
         return plotly_utils.plot_point_box_revised(x, y, margin_b=400)
 
 
-    def measure_distribution_plot(self, astroA_l, bh, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', mode='MOA'):
+    def measure_distribution_plot(self, astroA_l, bh, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', mode='MOA', with_measure_values=False):
         '''
         Default min is 0
 
@@ -4096,8 +4278,6 @@ class AstrocytePlotter():
         if np.sum([len(measure_d[k]) for k in measure_d.keys()]) == 0:
             return None, None, None
 
-        print('LENGHTS?')
-        print([len(measure_d[k]) for k in measure_d.keys()])
         #Get min and max range to filter (if not given just take min and max values of event value measures)
         if min_measure is None:
             min_range = np.min([np.min(measure_d[k]) for k in measure_d.keys()])
@@ -4144,7 +4324,9 @@ class AstrocytePlotter():
             #TODO
             x_title += ''
         fig = plotly_utils.plot_scatter_error(x, y_l, mode='lines', title='{}-{} distribution'.format(bh, measure_name), x_title=measure_name, y_title='')
-        print('THE X VALUES', x)
+
+        if mode == 'MOE' and with_measure_values == True:
+            return fig, x, y_l, all_events_measure_l
         return fig, x, y_l
 
     def measure_distribution_bh_compare_plot(self, astroA_l, bh_l, measure, num_bins=10, min_measure=0, max_measure=0, measure_name='', confidence=True, with_stats=True, mode='MOA'):

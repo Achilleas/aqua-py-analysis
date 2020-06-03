@@ -183,6 +183,8 @@ def plot_histogram(arr, title='histogram', x_title='', y_title=''):
     fig = go.Figure(data=histogram, layout=layout)
     return fig
 
+
+
 def plot_scatter(x, y , mode='lines', title='scatter', x_title='', y_title='', bin_size=1, bin_type='mean'):
     if bin_size > 1:
         y = bin_avg_arr(y, bin_size, bin_type=bin_type)
@@ -318,7 +320,7 @@ def plot_scatter_fmt(x, y , mode='lines', title='scatter', astype='float', strai
     fig = go.Figure(data=[trace0], layout=layout)
     return fig
 
-def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', title='scatter', x_title='', y_title='',
+def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', mode_l=[], conf_mode='lines', title='scatter', x_title='', y_title='',
                         xrange=None, yrange=None, confidence=True, with_stats=True, point_box=False):
     """
     In plot_scatter_mult we pass y_l, a list of values of y. Here we pass a list of lists of values of y
@@ -358,6 +360,9 @@ def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', title='scatter', x_title
     conf_low_l_l = []
     conf_high_l_l = []
 
+    if len(mode_l) == 0:
+        mode_l = [mode for i in range(len(x_l))]
+
     for y_i, y_l in enumerate(y_l_l):
         mean_l_l.append([stat_utils.mean_confidence_interval(y_v, confidence=0.95)[0] for y_v in y_l])
 
@@ -373,7 +378,7 @@ def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', title='scatter', x_title
         trace_i = go.Scatter(
             x=x_l[i],
             y=mean_l_l[i],
-            mode=mode,
+            mode=mode_l[i],
             name=name_l[i],
             line=dict(color=colour_l[i])
         )
@@ -381,7 +386,7 @@ def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', title='scatter', x_title
             upper_bound = go.Scatter(
                 x=x_l[i],
                 y=conf_high_l_l[i],
-                mode=mode,
+                mode=conf_mode,
                 marker=dict(color="#444"),
                 line=dict(width=1, color=colour_l[i], dash='longdash'),
                 showlegend=False
@@ -390,7 +395,7 @@ def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', title='scatter', x_title
             lower_bound = go.Scatter(
                 x=x_l[i],
                 y=conf_low_l_l[i],
-                mode=mode,
+                mode=conf_mode,
                 marker=dict(color="#444"),
                 line=dict(width=1, color=colour_l[i], dash='longdash'),
                 showlegend=False,
@@ -835,7 +840,7 @@ def plot_heatmap(arr, title='heatmap', color_bar_title='', color_scale='Portland
     fig = go.Figure(data=[heatmap], layout=layout)
     return fig
 
-def plot_contour(arr, title='contour', color_bar_title='', color_scale='Portland', line_width=0.1, height=400, width=600, num_ticks=5):
+def plot_contour(arr, title='contour', color_bar_title='', tick_x=[], color_scale='Portland', line_width=0.1, height=400, width=600, num_ticks=5):
     # ['Greys', 'YlGnBu', 'Greens', 'YlOrRd', 'Bluered', 'RdBu',
     #            'Reds', 'Blues', 'Picnic', 'Rainbow', 'Portland', 'Jet',
     #            'Hot', 'Blackbody', 'Earth', 'Electric', 'Viridis', 'Cividis']
@@ -843,19 +848,20 @@ def plot_contour(arr, title='contour', color_bar_title='', color_scale='Portland
     min_v = np.min(arr)
     max_v = np.max(arr)
 
-    tick_x = list(np.arange(min_v, max_v, (max_v-min_v) / num_ticks))
+    print(min_v, max_v)
+    if len(tick_x) == 0:
+        tick_x = list(np.arange(min_v, max_v, (max_v-min_v) / num_ticks))
 
-    if -np.log10(tick_x[1]) > 0:
-        #print('Truncating ', int(-np.log10(tick_x[1]))+1)
-        #print([v for v in tick_x])
-        tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))+1) for v in tick_x]
-    else:
-        #print('Truncating', int(-np.log10(tick_x[1])))
-        tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))) for v in tick_x]
+        if -np.log10(tick_x[1]) > 0:
+            #print('Truncating ', int(-np.log10(tick_x[1]))+1)
+            #print([v for v in tick_x])
+            tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))+1) for v in tick_x]
+        else:
+            #print('Truncating', int(-np.log10(tick_x[1])))
+            tick_x = [general_utils.truncate(v, int(-np.log10(tick_x[1]))) for v in tick_x]
 
-    if tick_x[1] > 10:
-        tick_x = [int(v) for v in tick_x]
-
+        if tick_x[1] > 10:
+            tick_x = [int(v) for v in tick_x]
     #print('min' ,min_v)
     #print('max', max_v)
     #print('num ticks', num_ticks)

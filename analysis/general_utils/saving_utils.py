@@ -58,7 +58,7 @@ def write_tif_volume_pieces(volume, frames_per_file, tif_path):
     print('Done!')
 
 def save_plotly_fig(fig, image_path, width=1000, height=1000, font_size=None,
-                    save_multiple_formats=True, x_title=None, y_title=None):
+                    save_png=True, save_svg=True, x_title=None, y_title=None):
     '''
     Save plotly figure to image
     '''
@@ -79,9 +79,10 @@ def save_plotly_fig(fig, image_path, width=1000, height=1000, font_size=None,
             title=y_title
         ))
 
-    pio.write_image(fig_copy, image_path + '.svg', format='svg',
+    if save_svg:
+        pio.write_image(fig_copy, image_path + '.svg', format='svg',
                     scale=None, width=width, height=height)
-    if save_multiple_formats:
+    if save_png:
         pio.write_image(fig_copy, image_path + '.png', format='png',
                 scale=None, width=width, height=height)
 
