@@ -7,9 +7,6 @@ import pandas
 from utils import get_voltage_increase
 
 def prepare_speed_from_file(filepath, wheel_radius, bin_size):
-    if skip_interval < 0:
-        print('Pass positive integer')
-        return None
     oscilloscope = pandas.read_csv(filepath, delimiter='\t').values
     times = oscilloscope[:, 0]
     bphase = oscilloscope[:, 2]
@@ -18,17 +15,18 @@ def prepare_speed_from_file(filepath, wheel_radius, bin_size):
     max_num_bins = int(len(bphase) // bin_size)
     circumference = 2 * np.pi * wheel_radius
     interval = times[1] - times[0]
+    bin_interval = interval * bin_size
+    sum_bin = np.array([sum(bphase_bin_increase[i*bin_size:(i+1)*bin_size]) for i in range(0, max_num_bins)])
 
     #NOTE: THIS IS INCORRECT. THE CORRECT CALCULATION SHOULD BE
     # bin_speed = sum_bin * 4 * circumference * (0.5/360) to obtain cm/interval_time
     #           (there are 4 voltage states before the next 0->1)
     #
-    #bin_speed = sum_bin / (circumference) #speed per bin_size * interval seconds
+    bin_speed = sum_bin / (circumference) #speed per bin_size * interval seconds
 
-    #NOTE: USE THIS CORRECT VERSION BUT CHANGE self.speed_values in astroAnalyzer
-    bin_speed = sum_bin * circumference * 4 * (0.5/360)
-    bin_interval = interval * bin_size
-
+    #NOTE: CORRECT VERSION (commented out): (note: self.speed_values in astroAnalyzer fix should be removed)
+    #bin_speed = sum_bin * circumference * 4 * (0.5/360)
+    
     return bin_interval, bin_speed
 
 #python speed.py --input_filepath=../analysis/data/oscilloscope_fixed_181012_002.txt --output_filepath=../analysis/data/oscilloscope_velocity_fixed_181012_002 --wheel_radius=7.5 --bin_size=97

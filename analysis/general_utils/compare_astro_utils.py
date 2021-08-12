@@ -360,7 +360,7 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
         behaviour = [behaviour, behaviour]
 
     output_details = {}
-    print('WHAT IS BEHAVIOR:', behaviour, type(behaviour))
+    #print('WHAT IS BEHAVIOR:', behaviour, type(behaviour))
     if (behaviour[0] not in astro_source.indices_d.keys()) or (behaviour[1] not in astro_source.indices_d.keys()):
         print('Behaviour : {} not in astro_source, (alignment counter)'.format(behaviour))
     astro_l_pair = [astro_target, astro_source]
@@ -410,7 +410,7 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
         num_self = np.sum(astro_filt_bool_l[0])
         num_compare = np.sum(astro_filt_bool_l[0] * move_array_2d(astro_filt_bool_l[1], move_vector))
     elif eval_setting == 'xcorr' or eval_setting == 'xcorr_random_both':
-        print('EVAL SETTING XCORR')
+        #print('EVAL SETTING XCORR')
         grid_1 = astro_filt_l[0]
         grid_2 = move_array_2d(astro_filt_l[1], move_vector)
 
@@ -428,7 +428,7 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
         corr_res = np.sum(grid_1_norm * grid_2_norm) / norm_val
         num_compare = corr_res
         num_self = np.sum(grid_1_norm * grid_1_norm) / norm_val
-        print('DONE EVAL XCORR')
+        #print('DONE EVAL XCORR')
     #Find maximum xcorr, allowing movement of the grid instead of providing a move vector and fixing
     elif eval_setting == 'xcorr_free':
         grid_1 = astro_filt_l[0]
@@ -484,7 +484,7 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
         if eval_setting == 'counter':
             num_fake.append(np.sum(astro_filt_bool_l[0] * sample_i))
         elif eval_setting == 'xcorr':
-            print('Eval setting xcorr...')
+            #print('Eval setting xcorr...')
 
             grid_1_norm = correlation_utils.normalize_grid(astro_filt_l[0], border=border_join if border_nan else None)
             grid_2_norm = correlation_utils.normalize_grid(sample_i, border=border_join if border_nan else None)
@@ -493,9 +493,9 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
             norm_val = np.sum(border_join) if border_nan else (grid_1_norm.shape[0]*grid_1_norm.shape[1])
             corr_res = corr_res / norm_val
             num_fake.append(corr_res)
-            print('ADDED fake {}'.format(i))
+            #print('ADDED fake {}'.format(i))
         elif eval_setting == 'xcorr_free':
-            print('Eval setting xcorr_free...')
+            #print('Eval setting xcorr_free...')
 
             grid_1_norm = correlation_utils.normalize_grid(astro_filt_l[0], border=border_join if border_nan else None)
             grid_2_norm = correlation_utils.normalize_grid(sample_i, border=border_join if border_nan else None)
@@ -514,9 +514,9 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
             output_details['fake_move_vector_free_l'].append(move_vector_free)
             output_details['fake_corr_matrix_l'].append(fake_corr_matrix)
 
-            print('ADDED fake {}'.format(i))
+            #print('ADDED fake {}'.format(i))
         elif eval_setting == 'xcorr_random_both':
-            print('GENERATING FAKE SAMPLES')
+            #print('GENERATING FAKE SAMPLES')
             event_areas_source = astro_source.res_d['area'][astro_source.event_subsets[behaviour[1]]] / (astro_source.spatial_res**2)
             sample_source_i = get_fake_astrocyte_sample_from_areas(astro_source, sizes_l=event_areas_source, mode=fake_sample_mode, filter_ratio=1, return_info=False, border_grid=fake_sample_border_grid)
 
@@ -532,7 +532,7 @@ def alignment_counter(astro_target, astro_source, grid_target=None, grid_source=
             norm_val = np.sum(border_join) if border_nan else (grid_1_norm.shape[0]*grid_1_norm.shape[1])
             corr_res = corr_res / norm_val
             num_fake.append(corr_res)
-            print('ADDED fake {}'.format(i))
+            #print('ADDED fake {}'.format(i))
         output_details['fake_samples'].append(sample_i)
 
     output_details['eval_setting'] = eval_setting

@@ -75,8 +75,11 @@ def read_aqua_mats(mats_folder_path):
     framerates_inv_l = []
     spatial_res_l = []
     input_shape_l = []
+    if len(glob.glob(os.path.join(mats_folder_path, '*.mat'))) == 0:
+        print('.mat files dont exist here: {}'.format(mats_folder_path))
+        return None
 
-    for filepath in glob.glob(os.path.join(mats_folder_path, '*.mat')):
+    for filepath in sorted(glob.glob(os.path.join(mats_folder_path, '*.mat'))):
         print(filepath)
 
         with h5py.File(filepath, 'r') as matfile:
@@ -96,8 +99,8 @@ def read_aqua_mats(mats_folder_path):
             elif len(matfile['res']['fts']['region']) == 2:
                 print('NO REGION')
             else:
-                print('??? REGION LEN: ', len(matfile['res']['fts']['region']))
-            print('OPTS', opts_d)
+                print('Region len: ', len(matfile['res']['fts']['region']))
+            #print('Opts', opts_d)
             framerates_inv_l.append(float(opts_d['frameRate'][0][0]))
             spatial_res_l.append(float(opts_d['spatialRes'][0][0]))
 
@@ -109,14 +112,15 @@ def read_aqua_mats(mats_folder_path):
             index_append = np.sum([i_shape[-1] for i_shape in input_shape_l]) - input_shape_l[0][-1]
             index_append_3D = np.sum([np.prod(i_shape) for i_shape in input_shape_l]) - np.prod(input_shape_l[0])
 
-            print('index append:', index_append)
-            print('3D index append', index_append_3D)
+            #print('index append:', index_append)
+            #print('3D index append', index_append_3D)
             #Basic (exclude map)
             for k in list(set(basic_d.keys()) - set(['map'])):
                 d[k] = basic_d[k]
             #Curve
             for k in curve_d.keys():
                 d[k] = curve_d[k]
+
             #Propagation
             for k in propagation_d.keys():
                 d[k] = propagation_d[k]
@@ -153,13 +157,15 @@ def read_aqua_mats(mats_folder_path):
             if len(matfile['res']['fts']['region']) == 4:
                 #Just for first file:
                 d['border_mask'] = np.array(matfile[region_d['cell']['mask'][0][0]])
-                d['clandmark_mask'] = np.array(matfile[region_d['landMark']['mask'][0][0]])
-                d['clandmark_center'] = region_d['landMark']['center']
                 #Regions
                 d['border_dist2border'] = region_d['cell']['dist2border']
                 #Landmarks
-                d['clandmark_distAvg'] = region_d['landmarkDist']['distAvg']
-
+                try:
+                    d['clandmark_mask'] = np.array(matfile[region_d['landMark']['mask'][0][0]])
+                    d['clandmark_center'] = region_d['landMark']['center']
+                    d['clandmark_distAvg'] = region_d['landmarkDist']['distAvg']
+                except Exception as err:
+                    print('Met error with landmarks (skipping):', err)    
             #Curves and Df/f curves
             d['dff_raw'] = np.array(matfile['res']['dffMat'])[0]
             d['dff_only'] = np.array(matfile['res']['dffMat'])[1]
@@ -169,19 +175,24 @@ def read_aqua_mats(mats_folder_path):
 
             d['event_i_video_segment'] = np.zeros([d['d_raw'].shape[1]])
             d['event_i_video_segment'][:] = len(input_shape_l)
+
             for k in d.keys():
                 d[k] = np.copy(np.array(d[k]).squeeze().transpose())
+
+            if len(d['t0'].shape) == 0:
+                continue
+
+            for k in d.keys():
 
                 #dffMax frame is incorrectly given in seconds not frames
                 #convert seconds to frames indices
                 if k == 'dffMaxFrame':
-                    print(d[k].shape)
                     d[k] = get_aqua_frame_from_seconds_np(d[k], framerates_inv_l[-1])
                 #index-1 (matlab to python), append index_append for stacking
                 #Also convert to uint64 array as they are indices
                 if k in indices_keys:
                     d[k] = d[k] - 1 + index_append
-                    d[k] = d[k].astype(np.uint64)
+                    d[k] = d[k].astype(np.uint64)                
 
                 #First instance
                 if k not in res_d:
@@ -191,12 +202,9 @@ def read_aqua_mats(mats_folder_path):
                     continue
                 #Not first instance, concatenating on first axis
                 else:
-                    print(k)
-                    print(d[k].shape)
-                    print(res_d[k].shape)
                     res_d[k] = np.concatenate([res_d[k], d[k]], axis=0)
-    print(len(framerates_inv_l))
-    print(len(spatial_res_l))
+    #print(len(framerates_inv_l))
+    #print(len(spatial_res_l))
     return res_d, input_shape_l, framerates_inv_l[0], spatial_res_l[0]
 
 def get_aqua_frame_from_seconds(s, fr_inv):
@@ -644,7 +652,6 @@ def get_measure_names(m_l):
     if isinstance(m_l, str):
         m_l = [m_l]
 
-    print('ML??', m_l)
     mn_l = []
     for m in m_l:
         if m == 'area':

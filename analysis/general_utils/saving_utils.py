@@ -7,11 +7,31 @@ import copy
 import os
 import csv
 from analysis.general_utils import plotly_utils
+import pandas as pd
+
+def generate_directory_path(path):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+
+def dict_to_csv(data_dict, name, base_folder=""):
+    file_path = os.path.join(base_folder, name)
+    generate_directory_path(file_path)
+
+    data_pd = pd.DataFrame.from_dict(data_dict, orient='index')
+    data_pd = data_pd.transpose()
+
+    if file_path[-4:] != '.csv':
+        file_path += '.csv'
+    data_pd.to_csv(file_path)
+
+    return data_pd
 
 def save_pickle(obj, filename):
     '''
     Save pickle file
     '''
+    generate_directory_path(filename)
+
     with open(filename, 'wb') as output:
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
@@ -62,6 +82,9 @@ def save_plotly_fig(fig, image_path, width=1000, height=1000, font_size=None,
     '''
     Save plotly figure to image
     '''
+
+    generate_directory_path(image_path)
+
     if font_size is None:
         font_size = np.floor(np.mean([width, height]) / 45)
     fig_copy = copy.deepcopy(go.Figure(fig.to_dict()))
@@ -87,6 +110,8 @@ def save_plotly_fig(fig, image_path, width=1000, height=1000, font_size=None,
                 scale=None, width=width, height=height)
 
 def save_csv_dict(d, path, key_order=None):
+    generate_directory_path(path)
+
     with open(os.path.join(path), mode='w') as csv_file:
         writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for k in key_order:
@@ -121,13 +146,9 @@ def save_pth_plt_l_log(plt_l, pth_l, axis='x'):
             save_plotly_fig(plt_copy, pth+'_log', x_title=plt_copy['layout']['xaxis']['title']['text'] + '-log')
         else:
             plotly_utils.apply_fun_axis_fig(plt_copy, lambda x : np.log(x), axis='y',)
-            print('PLT COPY??', plt_copy)
-            print('IS RANGEI N??', 'range' in plt_copy['layout']['yaxis'])
-            print('ISsdasf RANGEI N??', 'rangeadsf' in plt_copy['layout']['yaxis'])
-            print(plt_copy['layout']['yaxis']['range'], '???')
+
             if 'range' in plt_copy['layout']['yaxis']:
                 if plt_copy['layout']['yaxis']['range'] is not None:
-                    print('LAOYT??', plt_copy['layout'])
                     range_0 = plt_copy['layout']['yaxis']['range'][0]
                     range_1 = plt_copy['layout']['yaxis']['range'][1]
                     if range_0 is not None:

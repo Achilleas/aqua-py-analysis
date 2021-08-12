@@ -1254,7 +1254,6 @@ class AxonAstroPlotter():
 
         #Split into max_delay-min_delay frames
         split_size = (max_delay - min_delay) + 1
-        print('SPLIT SIZE?', split_size)
         running_prop, rest_prop = self.get_rest_run_proportion_events_interval(AA_l, running_id='running_exact', rest_id='rest_exact', interval=split_size, axon_bound_only=True)
 
         axon_border_events = {}
@@ -1507,14 +1506,12 @@ class AxonAstroPlotter():
 
         x = np.arange(-before_range, after_range + 1, 1)
 
-        print('CALLING FUNCTION HERE!!')
         fig, bin_stats = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),
                                                     y_title='Num events / interval' if y_title is None else y_title, x_title='Delay (s)', fit=fit, fit_annotation_pos_fix=AA.fr,
                                                     bin_main_size=delay_step_size, bin_mult_size=delay_step_size, opacity=0.5, confidence=confidence, with_stats=True,
                                                     bin_type=bin_type)
 
-        print('BINS TATS HERE??', bin_stats.keys())
         confidence_format = 'lines' if delay_step_size == 1 else 'bar'
         fig2 = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),
@@ -1599,9 +1596,6 @@ class AxonAstroPlotter():
                     #print(indices_filt[i], AA.res_d['tBegin'][event_id], AA.res_d['tEnd'][event_id])
                     if event_id in AA.event_subsets['stick_exact_start']:
                         signal_delays_filt_l.append(signal_delays_l[j])
-                print(len(signal_delays_filt_l))
-                print('VS')
-                print(len(signal_delays_l))
                 signal_delays_all_l_l.append(signal_delays_filt_l)
                 #signal_delays_all_l_l.append(signal_delays_l)
 
@@ -1640,14 +1634,13 @@ class AxonAstroPlotter():
 
         x = np.arange(-before_range, after_range + 1, 1)
 
-        print('CALLING FUNCTION HERE!!')
         fig, bin_stats = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),
                                                     y_title='Num events / interval' if y_title is None else y_title, x_title='Delay (s)', fit=fit, fit_annotation_pos_fix=AA.fr,
                                                     bin_main_size=delay_step_size, bin_mult_size=delay_step_size, opacity=0.5, confidence=confidence, with_stats=True,
                                                     bin_type=bin_type)
 
-        print('BINS TATS HERE??', bin_stats.keys())
+
         confidence_format = 'lines' if delay_step_size == 1 else 'bar'
         fig2 = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),

@@ -205,16 +205,16 @@ class AstrocytePlotter():
             except:
                 print('Folder structure exists?')
 
-    def get_output_experiment_path(self, astroA):
-        experiment_id = '/'.join(astroA.experiment_path.split('/')[-3:])
-        output_experiment_path = os.path.join(self.output_folder, experiment_id)
+    def get_output_experiment_path(self, astroA, output_folder):
+        experiment_id = '/'.join(astroA.experiment_path.split('/')[-2:])
+        output_experiment_path = os.path.join(output_folder, experiment_id)
         return output_experiment_path
 
     def plot_all_single(self, astroA):
-        output_experiment_path = self.get_output_experiment_path(astroA)
+        output_experiment_path = self.get_output_experiment_path(astroA, self.output_folder)
         print('Making dirs', output_experiment_path)
         self.setup_plot_folders(output_experiment_path)
-        '''
+
         print('Plotting behaviours basic...')
         #Behaviour basic
         figs_basic_plots = self.get_behaviour_basic_plots(astroA)
@@ -229,6 +229,37 @@ class AstrocytePlotter():
             fig_signal_path = os.path.join(output_experiment_path, 'plots', 'signal_basic_samples', 'signal_{}'.format(i))
             saving_utils.save_plotly_fig(fig_signal, fig_signal_path)
 
+
+        print('Plotting borders...')
+        #Borders plot
+        fig_border = self.get_border_plot(astroA)
+        saving_utils.save_plotly_fig(fig_border, os.path.join(output_experiment_path, 'plots' , 'borders', 'border'))
+
+
+        print('Plotting behaviour heatmaps...')
+        #Behaviour heatmaps
+        fig_heatmap_grids, fig_heatmap_dff_grids = self.get_behaviour_contour_plots(astroA)
+        heatmap_grid_base_path = os.path.join(output_experiment_path, 'plots', 'behaviour_heatmaps')
+        for k in fig_heatmap_grids.keys():
+            saving_utils.save_plotly_fig(fig_heatmap_grids[k], os.path.join(heatmap_grid_base_path, k))
+            saving_utils.save_plotly_fig(fig_heatmap_dff_grids[k], os.path.join(heatmap_grid_base_path, k + 'dff'))
+
+        print('Plotting behaviour activity bar plot...')
+        behaviour_activity_path = os.path.join(output_experiment_path, 'plots', 'behaviour_activity', 'activity')
+        fig_behaviour_activity = self.get_behaviour_activity_plot(astroA)
+        print('BEHAVIOUR ACTIVITY PATH \nn\\n\n\n\n', behaviour_activity_path)
+        saving_utils.save_plotly_fig(fig_behaviour_activity, behaviour_activity_path, width=1200, height=800)
+
+
+        print('Plotting behaviour event size bar plot...')
+        behaviour_area_path = os.path.join(output_experiment_path, 'plots', 'behaviour_areas', 'areas')
+        fig_behaviour_area = self.get_behaviour_area_plot(astroA)
+        saving_utils.save_plotly_fig(fig_behaviour_area, behaviour_area_path)
+
+        print('Plotting behaviour amplitude size bar plot...')
+        behaviour_amplitude_path = os.path.join(output_experiment_path, 'plots', 'signal_amplitudes', 'amplitudes')
+        fig_behaviour_amplitude = self.get_behaviour_amplitude_bar_plot(astroA)
+        saving_utils.save_plotly_fig(fig_behaviour_amplitude, behaviour_amplitude_path)
 
         print('Plotting random samples of signals on different behaviours...')
         fig_bk_signals = self.get_signal_bk_figs_samples(astroA, 3)
@@ -247,38 +278,90 @@ class AstrocytePlotter():
 
             for j in range(min(10, len(sample_figs[2]))):
                 saving_utils.save_plotly_fig(sample_figs[2][j], os.path.join(stick_run_sample_path, '{}-signal_{}'.format(i, j)))
-        '''
-        '''
-        print('Plotting behaviour heatmaps...')
-        #Behaviour heatmaps
-        fig_heatmap_grids, fig_heatmap_dff_grids = self.get_behaviour_contour_plots(astroA)
-        heatmap_grid_base_path = os.path.join(output_experiment_path, 'plots', 'behaviour_heatmaps')
-        for k in fig_heatmap_grids.keys():
-            saving_utils.save_plotly_fig(fig_heatmap_grids[k], os.path.join(heatmap_grid_base_path, k))
-            saving_utils.save_plotly_fig(fig_heatmap_dff_grids[k], os.path.join(heatmap_grid_base_path, k + 'dff'))
-        '''
-        '''
-        print('Plotting behaviour activity bar plot...')
-        behaviour_activity_path = os.path.join(output_experiment_path, 'plots', 'behaviour_activity', 'activity')
-        fig_behaviour_activity = self.get_behaviour_activity_plot(astroA)
-        saving_utils.save_plotly_fig(fig_behaviour_activity, behaviour_activity_path, width=1200, height=800)
 
 
-        print('Plotting behaviour event size bar plot...')
-        behaviour_area_path = os.path.join(output_experiment_path, 'plots', 'behaviour_areas', 'areas')
-        fig_behaviour_area = self.get_behaviour_area_plot(astroA)
-        saving_utils.save_plotly_fig(fig_behaviour_area, behaviour_area_path)
+        bh_l = ['rest', 'stick_rest', 'running', 'stick_run_ind_15']
+        #Area: None, 60, num_bins = 10
+        #Duration: None, 30, num_bins = 10
+        #dff :  0.6, 5, num_bins = 20
+        print('Comparing behaviour distribution plots for SINGLE...')
+        for n_bins in [10, 20]:
+            print('NUM BINS:', n_bins)
+            for behaviour_l in [bh_l]: #, ['rest', 'running'], ['running', 'stick'], ['rest', 'stick_rest'], ['running', 'stick_run_ind_15']]:
+                for measure, min_measure, max_measure in [
+                    ['area', None, 60],
+                    ['dffMax2', 0.6, 5],
+                    ['duration', None, 30],
+                ]:
+
+                    for confidence in [True]:
+                        measure_name = aqua_utils.get_measure_names(measure)
+                        path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence))
+                        plot, stats_d = self.measure_distribution_bh_compare_plot([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=confidence, with_stats=True, mode='MOA')
+
+                        if measure == 'duration':
+                            plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
+
+                        saving_utils.save_pth_plt_l_log([plot], [path], axis='x')
+                        saving_utils.save_pth_plt_l_log([plot], [path], axis='y')
+                        #Save results in text file
+                        for i, name in enumerate(stats_d['names']):
+                            #Create folder
+                            data_folder_path = path
+                            try:
+                                os.makedirs(path)
+                            except:
+                                pass
+                            temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+                            saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                            np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(name)), np.array(temp_d['data']).transpose(), delimiter=",")
+                    
+                    '''
+                    for confidence in [True]:
+                        for with_log in [False, True]:
+                            try:
+                                measure_name = aqua_utils.get_measure_names(measure)
+                                plot, stats_d = self.measure_distribution_bh_compare_plot_exponential_fit([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=False, with_stats=True, with_log=with_log)
+                                path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}_EXPFIT-withlog={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence, with_log))
+                                if measure == 'duration':
+                                    plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
+                                #Save results in text file
+                                for i, name in enumerate(stats_d['names']):
+                                    #Create folder
+                                    data_folder_path = path
+                                    try:
+                                        os.makedirs(path)
+                                    except:
+                                        pass
+                                    temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
+
+                                    if len(name.split('__')) == 2:
+                                        tx_name = name.split('__')[0] + '_expfit'
+                                    else:
+                                        tx_name = name
+                                    print('TX NAME', name)
+                                    saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(tx_name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
+                                    np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(tx_name)), np.array(temp_d['data']).transpose(), delimiter=",")
+                                saving_utils.save_plotly_fig(plot, path)
+
+                                print('THE STAT HERE?', stats_d)
+                            except Exception as e:
+                                print('EXCEPTION\n\n\n', 'CONF', confidence, 'LOG', with_log, 'measure' ,measure)
+                    '''
+
+
+        print('Plotting signal durations...')
+        #Signal durations plot
+        durations_base_path = os.path.join(output_experiment_path, 'plots', 'signal_durations')
+        fig_durations = self.get_signal_durations_plot(astroA)
+        for k in fig_durations.keys():
+            saving_utils.save_plotly_fig(fig_durations[k], os.path.join(durations_base_path, k + '-durations'))
+
+
 
         '''
-
-        '''
-        print('Plotting behaviour amplitude size bar plot...')
-        behaviour_amplitude_path = os.path.join(output_experiment_path, 'plots', 'signal_amplitudes', 'amplitudes')
-        fig_behaviour_amplitude = self.get_behaviour_amplitude_bar_plot(astroA)
-        saving_utils.save_plotly_fig(fig_behaviour_amplitude, behaviour_amplitude_path)
-
         if astroA.aqua_bound == True:
-
+            
             print('Plotting triplet plot...')
             #Triplet plot
             triplet_base_path = os.path.join(output_experiment_path, 'plots' , 'triplet')
@@ -299,19 +382,14 @@ class AstrocytePlotter():
                         print('SAVING TRIPLET BAR')
                         saving_utils.save_plotly_fig(fig, path)
         '''
-        '''
-        print('Plotting signal durations...')
-        #Signal durations plot
-        durations_base_path = os.path.join(output_experiment_path, 'plots', 'signal_durations')
-        fig_durations = self.get_signal_durations_plot(astroA)
-        for k in fig_durations.keys():
-            saving_utils.save_plotly_fig(fig_durations[k], os.path.join(durations_base_path, k + '-durations'))
 
+        '''
         print('Plotting Signal duration split relative differences...')
         duration_split_differences_path = os.path.join(output_experiment_path, 'plots', 'signal_durations', 'duration_splits_relative_differences')
         fig_duration_split_differences = self.get_duration_split_differences_from_default(astroA)
         saving_utils.save_plotly_fig(fig_duration_split_differences, duration_split_differences_path)
         '''
+
         '''
         #Signal delays plot
         signal_delays_path = os.path.join(output_experiment_path, 'plots' , 'signal_delays')
@@ -322,21 +400,16 @@ class AstrocytePlotter():
             print('FIG K', fig_k)
             saving_utils.save_plotly_fig(fig_delays_waterfall_d[fig_k], os.path.join(signal_delays_path, fig_k + '-delays_waterfall'))
             saving_utils.save_plotly_fig(fig_delays_waterfall_interpolate_d[fig_k], os.path.join(signal_delays_path, fig_k + '-delays_waterfall_interpolate'))
-        '''
-        '''
-        print('Plotting borders')
-        #Borders plot
-        fig_border = self.get_border_plot(astroA)
-        saving_utils.save_plotly_fig(fig_border, os.path.join(output_experiment_path, 'plots' , 'borders', 'border'))
-        '''
-        '''
+        
+
+        print('Plotting singal proportion delays...')
         fig_proportion_delays_path = os.path.join(output_experiment_path, 'plots', 'signal_proportion_delays')
         fig_proportion_delays_d = self.get_proportion_delays_plot_all([astroA])
 
         for fig_k in fig_proportion_delays_d.keys():
             saving_utils.save_plotly_fig(fig_proportion_delays_d[fig_k], os.path.join(fig_proportion_delays_path, fig_k))
-        '''
-        '''
+        
+
         print('Plotting sample frame split examples...')
         figs_frame_split_examples = self.get_frame_split_example_plots(astroA)
         for pk in figs_frame_split_examples.keys():
@@ -350,7 +423,6 @@ class AstrocytePlotter():
         fig_l = self.get_random_astrocyte_plot(astroA)
         for i, fig in enumerate(fig_l):
             saving_utils.save_plotly_fig(fig, os.path.join(figs_random_event_path, 'sample_{}'.format(i)))
-
         '''
 
         '''
@@ -436,72 +508,7 @@ class AstrocytePlotter():
                 for i, contour_random in enumerate(d['contour_random']):
                     saving_utils.save_plotly_fig(contour_random, os.path.join(path, 'bh_{}-dff_{}-random_{}'.format(bh, dff_mode, i)))
         '''
-        '''
-        bh_l = ['rest', 'stick_rest', 'running', 'stick_run_ind_15']
-        #Area: None, 60, num_bins = 10
-        #Duration: None, 30, num_bins = 10
-        #dff :  0.6, 5, num_bins = 20
-        print('Comparing behaviour distribution plots for SINGLE...')
-        for n_bins in [10, 20]:
-            print('NUM BINS:', n_bins)
-            for behaviour_l in [bh_l]: #, ['rest', 'running'], ['running', 'stick'], ['rest', 'stick_rest'], ['running', 'stick_run_ind_15']]:
-                for measure, min_measure, max_measure in [
-                    #['area', None, 60],
-                    #['dffMax2', 0.6, 5],
-                    ['duration', None, 30],
-                ]:
 
-                    for confidence in [True]:
-                        measure_name = aqua_utils.get_measure_names(measure)
-                        path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence))
-                        plot, stats_d = self.measure_distribution_bh_compare_plot([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=confidence, with_stats=True, mode='MOA')
-
-                        if measure == 'duration':
-                            plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
-
-                        saving_utils.save_pth_plt_l_log([plot], [path], axis='x')
-                        saving_utils.save_pth_plt_l_log([plot], [path], axis='y')
-                        #Save results in text file
-                        for i, name in enumerate(stats_d['names']):
-                            #Create folder
-                            data_folder_path = path
-                            try:
-                                os.makedirs(path)
-                            except:
-                                pass
-                            temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
-                            saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
-                            np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(name)), np.array(temp_d['data']).transpose(), delimiter=",")
-
-                    for confidence in [True]:
-                        for with_log in [False, True]:
-                            measure_name = aqua_utils.get_measure_names(measure)
-                            plot, stats_d = self.measure_distribution_bh_compare_plot_exponential_fit([astroA], behaviour_l, measure=measure, num_bins=n_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, confidence=False, with_stats=True, with_log=with_log)
-                            path = os.path.join(output_experiment_path, 'plots', '{}_histogram_bh_comparison_individual'.format(measure_name), 'behaviours-{}-nbins={}-min={}-max={}-conf={}_EXPFIT-withlog={}'.format('_'.join(behaviour_l), n_bins, min_measure, max_measure, confidence, with_log))
-                            if measure == 'duration':
-                                plotly_utils.apply_fun_axis_fig(plot, lambda x : x / astroA.fr, axis='x')
-
-                            #Save results in text file
-                            for i, name in enumerate(stats_d['names']):
-                                #Create folder
-                                data_folder_path = path
-                                try:
-                                    os.makedirs(path)
-                                except:
-                                    pass
-                                temp_d = {k : stats_d[k][i] for k in stats_d.keys()}
-
-                                if len(name.split('__')) == 2:
-                                    tx_name = name.split('__')[0] + '_expfit'
-                                else:
-                                    tx_name = name
-                                print('TX NAME', name)
-                                saving_utils.save_csv_dict(temp_d, os.path.join(data_folder_path, '{}.csv'.format(tx_name)), key_order=['names', 'x', 'mean', 'conf_95', 'std'])
-                                np.savetxt(os.path.join(data_folder_path, '{}-data.csv'.format(tx_name)), np.array(temp_d['data']).transpose(), delimiter=",")
-                            saving_utils.save_plotly_fig(plot, path)
-
-                            print('THE STAT HERE?', stats_d)
-        '''
         '''
         #Every 60 seconds, whole vid
         with_donwsample = True
@@ -559,7 +566,7 @@ class AstrocytePlotter():
                                                     downsample_length=downsample_length,
                                                     save_base_path=save_base_path)
         '''
-
+        '''
         bh_l = ['rest', 'running']
         for bh in bh_l:
             start_t = 0
@@ -576,7 +583,7 @@ class AstrocytePlotter():
                                 end_t=end_t,
                                 downsample_length=downsample_length,
                                 save_base_path=save_base_path)
-
+        '''
 
     def make_event_appended_video_bh_frames(self, astro, bh, start_t=0, end_t=-1, downsample_length=60, save_base_path=''):
         curr_indices = astro.indices_d[bh][start_t:end_t]
@@ -680,7 +687,7 @@ class AstrocytePlotter():
 #--------#--------#--------#--------#--------#--------#--------#--------#--------#--------
     #Experiment_id/days
     def plot_comparisons(self, astroA_l):
-        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l)
+        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l, self.output_folder)
         print(output_experiment_path_comparison)
         #Setup folders
         self.setup_plot_folders_comparison(output_experiment_path_comparison)
@@ -807,7 +814,7 @@ class AstrocytePlotter():
         '''
 
     def plot_comparisons_all(self, astroA_l, astroA_l_pairs=None, astroA_l_good_pairs=None, astroA_l_good=None, astroA_long_l=None):
-        output_experiment_path_all_comparison, _, _, astroA_l_s = self.setup_comparison_all_vars(astroA_l)
+        output_experiment_path_all_comparison, _, _, astroA_l_s = self.setup_comparison_all_vars(astroA_l, self.output_folder)
         print('Plotting sizes histogram dataset comparison for each behaviour')
         self.setup_plot_folders_all_comparison(output_experiment_path_all_comparison)
 
@@ -2333,7 +2340,7 @@ class AstrocytePlotter():
 
 #--------#--------#--------#--------#--------#--------#--------#--------#--------#--------
     def generate_corr_data(self, astroA):
-        output_experiment_path = self.get_output_experiment_path(astroA)
+        output_experiment_path = self.get_output_experiment_path(astroA, self.output_folder)
         print('Making dirs', output_experiment_path)
         self.setup_file_folders(output_experiment_path)
 
@@ -2355,7 +2362,7 @@ class AstrocytePlotter():
         self.write_csv_duration_splits(astroA, duration_csv_path)
 
     def generate_corr_data_pair(self, astroA_l):
-        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l)
+        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l, self.output_folder)
         print(output_experiment_path_comparison)
         print('Making dirs', output_experiment_path_comparison)
         self.setup_file_folders_comparison(output_experiment_path_comparison)
@@ -2392,7 +2399,7 @@ class AstrocytePlotter():
         return prob_v
 
     def read_corr_pair_data(self, astroA_l):
-        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l)
+        output_experiment_path_comparison, days_str, day_l_s, astroA_l_s = self.setup_comparison_vars(astroA_l, self.output_folder)
         comparison_paths = glob.glob(os.path.join(output_experiment_path_comparison, 'files/correlations/corr_compare_*.pkl'))
 
         corr_pair_d = {}
@@ -2403,7 +2410,7 @@ class AstrocytePlotter():
         return corr_pair_d
 
     def read_corr_data(self, astroA):
-        experiment_path = self.get_output_experiment_path(astroA)
+        experiment_path = self.get_output_experiment_path(astroA, self.output_folder)
         print('Experiment path', experiment_path)
 
         fake_sample_corr_paths = glob.glob(os.path.join(experiment_path, 'files/correlations/fake_sample_*.pkl'))
@@ -2421,7 +2428,7 @@ class AstrocytePlotter():
         #return fake_corr_d, splits_corr_d
         return fake_corr_d
 
-    def setup_comparison_vars(self, astroA_l):
+    def setup_comparison_vars(self, astroA_l, output_folder):
         experiment_id_l = []
         day_l = []
         for astroA in astroA_l:
@@ -2436,13 +2443,12 @@ class AstrocytePlotter():
         astroA_l_s = [astroA_l[i] for i in sort_i]
 
         days_str = 'days_' + '_'.join([str(day) for day in day_l_s])
-        output_experiment_path_comparison = os.path.join(self.output_folder,
+        output_experiment_path_comparison = os.path.join(output_folder,
                                                         experiment_id_l[0],
                                                         days_str)
-        print('done')
         return output_experiment_path_comparison, days_str, day_l_s, astroA_l_s
 
-    def setup_comparison_all_vars(self, astroA_l):
+    def setup_comparison_all_vars(self, astroA_l, output_folder):
         experiment_id_l = []
         day_l = []
         for astroA in astroA_l:
@@ -2454,7 +2460,7 @@ class AstrocytePlotter():
         astroA_l_s = [astroA_l[i] for i in sort_i]
 
         days_str = 'days_' + '_'.join([str(day) for day in day_l_s])
-        output_experiment_path_all_comparison = os.path.join(self.output_folder, 'astro_only', 'all')
+        output_experiment_path_all_comparison = os.path.join(output_folder, 'all')
 
         print('done')
         return output_experiment_path_all_comparison, days_str, day_l_s, astroA_l_s
@@ -2468,9 +2474,9 @@ class AstrocytePlotter():
         figs['whisker_bin'] = plotly_utils.plot_scatter_fmt(x=np.arange(len(astroA.whisker_bin)), y=astroA.whisker_bin, astype='int', straight_lines_only=True, title='Whisker', x_title='Frame', y_title='No whisker/Whisker movement')
         figs['pupil'] = plotly_utils.plot_scatter_fmt(x=np.arange(len(astroA.pupil_values)), y=astroA.pupil_values, astype='float', straight_lines_only=True, title='Pupil', x_title='Frame', y_title='Pupil value')
 
-        figs['stick'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['stick'])), y=astroA.roi_dict['extra']['stick'], title='Stick', x_title='Frame', y_title='Stick value')
-        figs['speed'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['speed'])), y=astroA.roi_dict['extra']['speed'], title='Speed', x_title='Frame', y_title='Speed value')
-        figs['whisker'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['whiskers'])), y=astroA.roi_dict['extra']['whiskers'], title='Whisker', x_title='Frame', y_title='Whisker value')
+        figs['stick_values'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['stick'])), y=astroA.roi_dict['extra']['stick'], title='Stick', x_title='Frame', y_title='Stick value')
+        figs['speed_values'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['speed'])), y=astroA.roi_dict['extra']['speed'], title='Speed', x_title='Frame', y_title='Speed value')
+        figs['whisker_values'] = plotly_utils.plot_scatter(x=np.arange(len(astroA.roi_dict['extra']['whiskers'])), y=astroA.roi_dict['extra']['whiskers'], title='Whisker', x_title='Frame', y_title='Whisker value')
 
         def make_arr(inds, arr_length):
             arr = np.zeros([arr_length])
@@ -2492,7 +2498,10 @@ class AstrocytePlotter():
         return signal_duration_figs
 
     def get_border_plot(self, astroA):
-        return plotly_utils.plot_contour(astroA.res_d['border_mask'] + astroA.res_d['clandmark_mask'], title='border_and_landmark_mask', height=600, width=800)
+        if 'clandmark_mask' in astroA.res_d.keys():
+            return plotly_utils.plot_contour(astroA.res_d['border_mask'] + astroA.res_d['clandmark_mask'], title='border_and_landmark_mask', height=600, width=800)
+        else:
+            return plotly_utils.plot_contour(astroA.res_d['border_mask'], title='border_mask', height=600, width=800)
 
     def get_behaviour_contour_plots(self, astroA):
         '''
@@ -2502,8 +2511,6 @@ class AstrocytePlotter():
         fig_heatmap_grids = {}
         fig_heatmap_dff_grids = {}
 
-        print('EVENT GRIDS?' ,astroA.event_grids_1min)
-        print('KEYS??', astroA.indices_d.keys())
         #fig_heatmap_dff_grids
         for k in astroA.event_subsets.keys():
             fig_heatmap_grids[k] = plotly_utils.plot_contour(astroA.event_grids_1min[k], title=k + '_event grid', height=600, width=800)
@@ -2512,6 +2519,24 @@ class AstrocytePlotter():
             fig_heatmap_dff_grids[k] = plotly_utils.plot_contour(astroA.event_grids_1min_dff[k], title=k+'_event grid dff', height=600, width=800)
 
         return fig_heatmap_grids, fig_heatmap_dff_grids
+
+    def get_behaviour_contour_threshold_plots(self, astroA, threshold=0.5):
+        '''
+        Use 1 min normalized plots
+        '''
+
+        fig_heatmap_grids = {}
+        fig_heatmap_dff_grids = {}
+
+        #fig_heatmap_dff_grids
+        for k in astroA.event_subsets.keys():
+            fig_heatmap_grids[k] = plotly_utils.plot_contour_threshold(astroA.event_grids_1min[k], threshold_perc=threshold, title=k + '_event grid - Saturation : ' + str(threshold*100) + '%', height=600, width=800)
+
+        for k in astroA.event_subsets.keys():
+            fig_heatmap_dff_grids[k] = plotly_utils.plot_contour_threshold(astroA.event_grids_1min_dff[k], threshold_perc=threshold, title=k+'_event grid dff - Saturation : ' + str(threshold*100) + '%', height=600, width=800)
+
+        return fig_heatmap_grids, fig_heatmap_dff_grids
+
 
     def get_behaviour_activity_plot(self, astroA):
         activity_ratio_k = np.array(self.filter_keys(astroA))
@@ -2568,7 +2593,7 @@ class AstrocytePlotter():
             activity_ratio_l.append(activity_bh_l)
 
         activity_means = [np.mean(activity_ratios) for activity_ratios in activity_ratio_l]
-        print('ACTIVITY MEANS 1', activity_means, 'DONE')
+
         activity_i = np.argsort(activity_means)
 
         x = np.array(bh_l)[activity_i]
@@ -2592,7 +2617,7 @@ class AstrocytePlotter():
                     activity_num_added[i] += 1
 
         activity_num_np /= activity_num_added
-        print('Activity sum: ', activity_num_np)
+
         activity_i = np.argsort(activity_num_np)
 
         activity_num_k_s = np.array(bh_l)[activity_i]
@@ -2625,7 +2650,7 @@ class AstrocytePlotter():
             activity_num_l.append(activity_bh_l)
 
         activity_means = [np.mean(activity_nums) for activity_nums in activity_num_l]
-        print('Activity MEANS HERE: ', activity_means)
+
         activity_i = np.argsort(activity_means)
 
         x = np.array(bh_l)[activity_i]
@@ -2803,8 +2828,6 @@ class AstrocytePlotter():
 
 
                 k_0 = list(stick_d.keys())[0]
-                print(k_0)
-                print('id {} NUM STICK: {}'.format(astroA.id, len(stick_d[k_0])))
 
                 arrs = [stick_v_l_d, running_v_l_d, no_running_v_l_d]
                 for k in stick_d.keys():
@@ -2812,8 +2835,6 @@ class AstrocytePlotter():
                         arr[k] = list(arr[k])
             else:
                 k_0 = list(stick_d.keys())[0]
-                print(k_0)
-                print('id {} NUM STICK: {}'.format(astroA.id, len(stick_d[k_0])))
                 for k in stick_d.keys():
                     stick_v_l_d[k].extend(stick_d[k])
                     running_v_l_d[k].extend(running_d[k])
@@ -2855,8 +2876,6 @@ class AstrocytePlotter():
             #STICK
             for un in unique_args:
                 plot_id = 'prop-{}-{}'.format('unique' if un else 'notunique', 'max_duration_None' if (max_duration is None) else 'max_duration_' + str(max_duration))
-                #print('??', after_range)
-                #print('???', before_range)
                 prop = np.zeros([(after_range+before_range+1)])
                 signal_delays_all_l = []
 
@@ -2867,9 +2886,6 @@ class AstrocytePlotter():
                     indices_filt_after = aqua_utils.filter_range_inds(inds, astroA.indices_d[after_bh], range=(1, after_range), prop=1.0)
                     indices_filt = np.array(np.sort(list(set(indices_filt_before) & set(indices_filt_after))))
 
-                    #print('TOTAL IND {} BEFORE {} AFTER {} JOIN {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
-                    #print(astroA.print_id)
-                    #print(indices_filt[0:10])
                     if len(indices_filt) == 0:
                         continue
                     #print('Len indices {} len filt before {} len filt after {} len filt {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
@@ -2925,7 +2941,6 @@ class AstrocytePlotter():
         before_delay: the delay of the interval we look for continious befrore and after bh(its actually kind the range...)
         '''
 
-        figs = {}
         signal_delays_all_l_l = []
 
         if measure is not None:
@@ -2947,12 +2962,8 @@ class AstrocytePlotter():
             indices_filt_after = aqua_utils.filter_range_inds(inds, astroA.indices_d[after_bh], range=(1, after_range), prop=1.0)
             indices_filt = np.array(np.sort(list(set(indices_filt_before) & set(indices_filt_after))))
 
-            #print('LEN INDICES_FILT: {}'.format(len(indices_filt)))
-            #print('TOTAL IND {} BEFORE {} AFTER {} JOIN {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
             if len(indices_filt) == 0:
                 continue
-            #print('Len indices {} len filt before {} len filt after {} len filt {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
-            #print('LEN INDICES FILT : {}'.format(len(indices_filt)))
 
             delay_info_args = {'event_inds_subset' : astroA.event_subsets['default'],
                            'min_delay' : -before_range,
@@ -2965,9 +2976,7 @@ class AstrocytePlotter():
 
             _, _, _, signal_delays_l_l, peak_mins_l_l, valid_event_i_l_l = aqua_utils.get_delay_info_from_res(indices_filt, astroA.res_d, **delay_info_args)
 
-            #DFF MAX FIX
             #-------------------------------------------------------------------
-            print('Num unique indices CHECK {}'.format(len(valid_event_i_l_l)))
             signal_delays_l_l_amended = []
             if measure is not None:
                 #Special case for amplitude, we want the exact spot where
@@ -3057,14 +3066,15 @@ class AstrocytePlotter():
 
         x = np.arange(-before_range, after_range + 1, 1)
 
-        print('CALLING FUNCTION HERE!!')
+
         fig, bin_stats = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),
                                                     y_title='Num events / interval' if y_title is None else y_title, x_title='Delay (s)', fit=fit, fit_annotation_pos_fix=astroA.fr,
                                                     bin_main_size=delay_step_size, bin_mult_size=delay_step_size, opacity=0.5, confidence=confidence, with_stats=True,
                                                     bin_type=bin_type)
-        print('BINS TATS HERE??', bin_stats.keys())
+
         confidence_format = 'lines' if delay_step_size == 1 else 'bar'
+
         fig2 = plotly_utils.plot_scatter_mult_tree(x=x, y_main=prop_avg_events, y_mult=prop_all_np, mode_main='lines', mode_mult='markers',
                                                     title='Average - Total events: {} Total intervals: {}'.format(total_events, prop_all_np.shape[0]),
                                                     y_title='Num events / interval' if y_title is None else y_title, x_title='Delay (s)', fit=fit, fit_annotation_pos_fix=astroA.fr,
@@ -3205,7 +3215,7 @@ class AstrocytePlotter():
         std_thresholds = np.array([all_events_mean + all_events_std,
                                 all_events_mean + 2*all_events_std,
                                 all_events_mean + 3*all_events_std])
-        print('THRESHOLDS STD', std_thresholds)
+
 
         for astroA in astroA_l:
             inds = astroA.indices_d[inds_bh]
@@ -3234,7 +3244,7 @@ class AstrocytePlotter():
 
             #DFF MAX FIX
             #-------------------------------------------------------------------
-            print('Num unique indices CHECK {}'.format(len(valid_event_i_l_l)))
+
             signal_delays_l_l_amended = []
             if measure is not None:
                 #Special case for amplitude, we want the exact spot where
@@ -3276,7 +3286,7 @@ class AstrocytePlotter():
                 elif state == 'after':
                     valid_delays_i = np.where(np.array(signal_delays_all_l) > 0)
                 else:
-                    print('???')
+
                     sys.exit()
                 measure_values_l = list(np.array(event_measure_all_l_l[s_i])[valid_delays_i])
                 measure_values_all[state].extend(measure_values_l)
@@ -3339,7 +3349,6 @@ class AstrocytePlotter():
 
                 for astroA in astroA_l:
                     stick_indices_filt = aqua_utils.filter_range_inds(astroA.indices_d[stick_id], astroA.indices_d['running'], range=(min_delay, max_delay), prop=0.95)
-                    #print('LEN INDICES PROP: before {} after {}'.format(len(astroA.indices_d[stick_id]), len(stick_indices_filt)))
 
                     delay_info_args = {'event_inds_subset' : astroA.event_subsets['default'],
                                    'min_delay' : min_delay,
@@ -3357,9 +3366,7 @@ class AstrocytePlotter():
                         signal_delays_all_l.extend(list(signal_delays_stick_np))
 
                 if avg_proportions:
-                    print('SUM OF STICK PROP BEFORE;', np.sum(stick_prop))
                     stick_prop /= len(astroA_l)
-                    print('SUM OF STICK PROP:', np.sum(stick_prop))
 
                 if not avg_proportions:
                     signal_delays_all = np.array(signal_delays_all_l)
@@ -3382,9 +3389,6 @@ class AstrocytePlotter():
             #RUNNING AND REST
             running_ind = astroA.indices_d[running_id]
             rest_ind = astroA.indices_d[rest_id]
-
-            print('running_ind', running_ind, 'split size' , interval)
-            print('running ind now', len(running_ind[:-(len(running_ind) % interval)]))
 
             if len(running_ind) % interval != 0:
                 running_ind = running_ind[:-(len(running_ind) % interval)]
@@ -3424,81 +3428,12 @@ class AstrocytePlotter():
         rest_prop = rest_prop / np.sum(rest_prop)
         return running_prop, rest_prop
 
-    '''
-
-    def get_proportion_delays_plot_all_old(self, astroA, min_delay=-20, max_delay=50):
-        """
-        For stick find take stick_exact_start when the mouse first hits
-        For running and rest:
-            Take all rest frames. Stich them and then split into (max_delay-min_delay) frame segments
-            Then see the events taking place at each point during the segment from min delay to max delay
-        """
-        #Unique, no unique
-        #Num stick start non num stick start
-        unique_args = [True, False]
-        max_duration_args = [None, astroA.duration_small]
-        with_stick_num_args = [True]
-
-
-
-        figs = {}
-        figs_interp = {}
-
-        stick_id = 'stick_exact_start'
-
-
-
-
-
-        running_id = 'running_exact'
-        rest_id = 'rest_exact'
-
-        for un in unique_args:
-            for max_duration in max_duration_args:
-                for with_stick_num in with_stick_num_args:
-                    delay_info_args = {'event_inds_subset' : astroA.event_subsets['default'],
-                                       'min_delay' : min_delay,
-                                       'max_delay' : max_delay,
-                                       'max_duration' : max_duration,
-                                       'unique_events' : un
-                                    }
-                    plot_id = 'prop-{}-{}-{}'.format('unique' if un else 'notunique',
-                                                'max_duration_None' if (max_duration is None) else 'max_duration_' + str(max_duration),
-                                                'stick_num_' + str(with_stick_num))
-
-                    if with_stick_num:
-                        rand_running = np.random.choice(list(set(astroA.indices_d[running_id]) - set(astroA.indices_d[stick_id])), size=len(astroA.indices_d[stick_id]), replace=False)
-                        rand_no_running = np.random.choice(list(set(astroA.indices_d[rest_id]) - set(astroA.indices_d[stick_id])), size=len(astroA.indices_d[stick_id]), replace=False)
-                    else:
-                        rand_running = list(set(astroA.indices_d[running_id]) - set(astroA.indices_d[stick_id]))
-                        rand_no_running = list(set(astroA.indices_d[rest_id]) - set(astroA.indices_d[stick_id]))
-
-                    signal_delays_stick_np, peak_delays_stick_np = aqua_utils.get_delay_info_from_res(astroA.indices_d[stick_id], astroA.res_d, **delay_info_args)
-                    signal_delays_running_np, peak_delays_running_np = aqua_utils.get_delay_info_from_res(rand_running, astroA.res_d, **delay_info_args)
-                    signal_delays_no_running_np, peak_delays_no_running_np = aqua_utils.get_delay_info_from_res(rand_no_running, astroA.res_d, **delay_info_args)
-
-                    stick_prop = np.zeros([max_delay-min_delay+1])
-                    running_prop = np.zeros([max_delay-min_delay+1])
-                    no_running_prop = np.zeros([max_delay-min_delay+1])
-
-                    for i, delay_x in enumerate(range(min_delay, max_delay+1)):
-                        stick_prop[i] = float(np.sum(signal_delays_stick_np == delay_x)) / len(signal_delays_stick_np)
-                        running_prop[i] = float(np.sum(signal_delays_running_np == delay_x)) / len(signal_delays_running_np)
-                        no_running_prop[i] = float(np.sum(signal_delays_no_running_np == delay_x)) / len(signal_delays_no_running_np)
-
-                    x_l = [np.arange(min_delay, max_delay+1) for i in range(3)]
-                    y_l = [stick_prop, running_prop, no_running_prop]
-
-                    figs[plot_id] = plotly_utils.plot_scatter_mult(x_l, y_l, name_l=['stick', 'running', 'rest'], mode='lines', title='scatter', x_title='Delay (s)', y_title='Events')
-                    plotly_utils.apply_fun_axis_fig(figs[plot_id], lambda x : x / astroA.fr, axis='x')
-        return figs
-    '''
 
     def get_triplet_plots(self, astroA, n_bins):
         fig_triplets = {}
         fig_radii_border = None
         for k in astroA.event_subsets.keys():
-            print('THE KEY??', k)
+
             if astroA.aqua_bound == False:
                 print('Plot triplet requires aqua bound to be true')
                 return None, None
@@ -3510,7 +3445,6 @@ class AstrocytePlotter():
             event_distances_from_center_micrometers = astroA.res_d['clandmark_distAvg'][astroA.event_subsets[k]]
             event_distances_from_center = event_distances_from_center_micrometers / astroA.spatial_res
 
-            print('MAX EVENT DISTANCE:', np.max(event_distances_from_center))
             event_durations = astroA.res_d['tEnd'][astroA.event_subsets[k]] - astroA.res_d['tBegin'][astroA.event_subsets[k]]
             event_areas = astroA.res_d['area'][astroA.event_subsets[k]]
 
@@ -3523,11 +3457,6 @@ class AstrocytePlotter():
                 event_distances_from_center_bins_l.append(event_distances_from_center[event_inds])
                 event_areas_bins_l.append(event_areas[event_inds])
                 event_durations_bins_l.append(event_durations[event_inds])
-
-            print('areas', area_bins)
-            print('total events norm', n_events_arr_norm)
-            print('total events', [len(n) for n in n_events_i_arr])
-            print('rbins:', r_bins)
 
             if 0 in [len(n) for n in n_events_i_arr]:
                 print('not enough events for key: ', k)
@@ -3556,7 +3485,7 @@ class AstrocytePlotter():
             if fig_radii_border == None:
                 fig_radii_border = plotly_utils.plot_contour(border_mask_temp, title='radius_extension_from_center', height=1000, width=1000,
                                                             color_bar_title='Radius (pixels)')
-            print('N EVENTS HERE??', len(n_events_arr_norm[:-1]))
+
             fig_triplets[k] = plotly_utils.plot_event_triplet(num_events_bins=n_events_arr_norm[:-1],
                                                   distances_bins=r_bins[:-1],
                                                   sizes_bins_lists=event_areas_bins_l[:-1],
@@ -3568,21 +3497,6 @@ class AstrocytePlotter():
                                                   title=k + '_event_triplet_plot')
             break
         return fig_triplets, fig_radii_border
-
-        '''
-        #TODO save in file
-        for k in event_subsets.keys():
-            print('Number of events: {} - {} ind_size {}'.format(k , len(event_subsets[k]), len(indices_d[k])))
-
-        print('Number of SHORT, MEDIUM AND LONG duration signals in different behavioural states')
-        #How are the indices split between short, medium and long during running, stick, ...
-        for k in indices_d.keys():
-            short_signals_len = np.sum(all_durations_class_d[k] == 1)
-            medium_signals_len = np.sum(all_durations_class_d[k] == 2)
-            long_signals_len = np.sum(all_durations_class_d[k] == 3)
-            total_signals = short_signals_len + medium_signals_len + long_signals_len
-            print('{:20s}:\tshort\t{}\tmedium\t{}\tlong\t{}\tTotal signals\t{}\tlen\t({:7d})'.format(k, short_signals_len, medium_signals_len, long_signals_len, total_signals, len(indices_d[k])))
-        '''
 
     def write_csv_duration_splits(self, astroA, path):
         #How are the indices split between short, medium and long during running, stick, ...
@@ -3691,26 +3605,7 @@ class AstrocytePlotter():
         return figs
 
 ######Other analysis#######
-    '''
-    def get_frame_split_max_corrs_plots(self, astroA):
-        #fake_corr_d, splits_corr_d = self.read_corr_data(astroA)
-        fake_corr_d = self.read_corr_data(astroA)
-        figs = {}
-        for prob_k in splits_corr_d.keys():
-            if prob_k not in fake_corr_d.keys():
-                continue
 
-            max_corrs = {}
-            max_corrs['fake'] = fake_corr_d[prob_k]['max_corr_l']
-            for frame_split in splits_corr_d[prob_k].keys():
-                if len(splits_corr_d[prob_k][frame_split]['max_corr_l']) != 0:
-                    max_corrs[frame_split + ' frames'] = splits_corr_d[prob_k][frame_split]['max_corr_l']
-
-            x = list(max_corrs.keys())
-            y = [max_corrs[k] for k in x]
-            figs[prob_k] = plotly_utils.plot_point_box_revised(x, y, title='Max correlations on different frame splits', x_title='Frames ({} fps)'.format(general_utils.truncate(astroA.fr, 2)), y_title='Max correlation value')
-        return figs
-    '''
     def get_compare_max_corrs_plots(self, astro_l_pair):
         corr_pair_d = self.read_corr_pair_data(astro_l_pair)
         figs = {}
@@ -3875,11 +3770,6 @@ class AstrocytePlotter():
                     data_d[pk][split_frames]['num_fake_ratio_l'].append(d['num_fake'][0]/float(d['num_self']))
                     data_d[pk][split_frames]['num_compare_ratio_l'].append(d['num_compare']/float(d['num_self']))
 
-                    #print('num self:', d['num_self'])
-                    #print('num fake:', d['num_fake'][0])
-                    #print('num compare:', d['num_compare'])
-                    #print('ratio fake:', data_d[pk][split_frames]['num_fake_ratio_l'])
-                    #print('ratio compare:', data_d[pk][split_frames]['num_compare_ratio_l'])
             x = []
             y = [[], []]
             for split_frames in self.num_frames_splits_l:
@@ -4025,14 +3915,8 @@ class AstrocytePlotter():
             default_ind = astroA.indices_d['default']
             cut_ind = astroA.indices_d['default'][:num_frames_cut_duration]
 
-            print(default_ind)
-            print(cut_ind)
             event_subsets_temp = aqua_utils.get_event_subsets({'default' : default_ind, 'cut' : cut_ind}, astroA.res_d, after_i=0, before_i=0, to_print=False)
             cut_event_subsets = event_subsets_temp['cut']
-
-            print('MAX BEGIN TIME', np.max(astroA.res_d['tBegin'][cut_event_subsets]))
-            print('MAX IND', len(astroA.indices_d['default']))
-            print('NUM FRAMES CUT', num_frames_cut_duration)
 
             grid_1 = aqua_utils.get_event_grid_from_x2D(astroA.res_d['x2D'][cut_event_subsets], (astroA.input_shape[0], astroA.input_shape[1]))
 
@@ -4044,8 +3928,6 @@ class AstrocytePlotter():
 
             for split_frames in frame_splits_l_temp:
                 xcorr_split_corrs_d[split_frames] = []
-
-                print('Split frames (self): {}'.format(split_frames))
 
                 event_grid_splits_l = compare_astro_utils.split_astro_grid(astroA, split_frames=split_frames, bk='default', inds_subset=cut_ind)
 
@@ -4091,13 +3973,9 @@ class AstrocytePlotter():
         grid_1 = astroA.event_grids['default']
         frame_splits_l_temp = [int(np.round(astroA.fr*split_frames_m*60)) for split_frames_m in self.num_frames_splits_splits_m_l[::-1]]
 
-        print('????', frame_splits_l_temp, astroA.id)
-        print(len(frame_splits_l_temp))
         for split_frames in frame_splits_l_temp:
             xcorr_split_corrs_d[split_frames] = []
-            print('Split frames (self): {}'.format(split_frames))
             event_grid_splits_l = compare_astro_utils.split_astro_grid(astroA, split_frames=split_frames, bk='default')
-            print('LEN EVENT GRIPD SPLITS L', len(event_grid_splits_l))
             if len(event_grid_splits_l) > 2:
                 for i in range(len(event_grid_splits_l)):
                     grid_1 = event_grid_splits_l[i]
@@ -4333,10 +4211,8 @@ class AstrocytePlotter():
         bh_y_d = {}
         x_l = []
         for bh in bh_l:
-            print('BH', bh)
             _, x, y_l = self.measure_distribution_plot(astroA_l, bh, measure=measure, num_bins=num_bins, min_measure=min_measure, max_measure=max_measure, measure_name=measure_name, mode=mode)
             if x is None:
-                print('BH IS NONE for ', bh, astroA_l[0].print_id)
                 continue
             x_l.append(x)
             if confidence:
@@ -4394,6 +4270,7 @@ class AstrocytePlotter():
             print(x_l[i])
             print(bh_y_l[i])
             params, params_covariance = optimize.curve_fit(test_func, x_l[i], bh_y_l[i])
+                
             y_fit = test_func(x_l[i], *params)
 
             par = [v for v in params]
@@ -4479,8 +4356,6 @@ class AstrocytePlotter():
             time_from = spot - 100
             time_to = spot + 100
 
-            print('time from to', time_from, time_to)
-
             stick_start_bin = np.zeros([len(astroA.stick_bin)])
             stick_start_bin[astroA.indices_d['stick_exact_start']] = 1
 
@@ -4503,7 +4378,6 @@ class AstrocytePlotter():
                     print('Skipping: change time from to')
                     continue
 
-                print('ADJ FROM {} ADJ TO {}'.format(adj_from, adj_to))
                 y = astroA.res_d['dff_only'][event_i][adj_from:adj_to]
                 x = np.arange(0, adj_to-adj_from)
 
@@ -4538,12 +4412,9 @@ class AstrocytePlotter():
             days = (str(astro_pair[0].day), str(astro_pair[1].day))
             days_id = '-'.join(days)
 
-            print('DAYS', days)
             pair_save_results_path = save_results_path + self.get_astro_pair_id(astro_pair) + '.pkl'
-            print('PAIR SAVE REUSLT PATH' , pair_save_results_path)
 
             if os.path.isfile(pair_save_results_path):
-                print('FILE EXISTS')
                 d = saving_utils.load_pickle(pair_save_results_path)
             else:
                 if align_setting == 'xcorr':
@@ -4580,27 +4451,18 @@ class AstrocytePlotter():
             pair_corrs_l.append(d['num_compare'])
             days_id_l.append(days_id)
 
-            print('DAYS: {} FAKE {} COMPARE {}:', days_id, np.mean(d['num_fake']), np.mean(d['num_compare']))
-            print('all fake vals:', d['num_fake'])
-
         pair_fakes_before = np.copy(pair_fakes)
         pair_corrs_l_before = np.copy(pair_corrs_l)
 
         #print('PAIR FAKES', pair_fakes)
         mean_num_fake = np.mean([np.mean(pair_fake) for pair_fake in pair_fakes])
-        print('mean num fake:', mean_num_fake)
         pair_corrs_d = {}
         for i in range(len(pair_corrs_l)):
-            print('Scaling {}'.format(days_id_l[i]))
             #mult = mean_num_fake / np.mean(pair_fakes[i])
             #NOT DOING ANY SCALING
             mult = 1
-            print('before pair corrs', pair_corrs_l[i])
-            print('before pair fakes', pair_fakes[i])
             pair_fakes[i] = np.array(pair_fakes[i]) * mult
             pair_corrs_l[i] = pair_corrs_l[i] * mult
-            print('after pair corrs', pair_corrs_l[i])
-            print('after pair fakes', pair_fakes[i])
             if days_id_l[i] not in pair_corrs_d:
                 pair_corrs_d[days_id_l[i]] = []
             pair_corrs_d[days_id_l[i]].append(pair_corrs_l[i])
@@ -4627,7 +4489,6 @@ class AstrocytePlotter():
 
         print('Working on {}'.format(self.get_astro_pair_id(astro_pair)))
         if os.path.isfile(save_pkl_path):
-            print('FILE EXISTS')
             res_d = saving_utils.load_pickle(save_pkl_path)
         else:
             res_d = {}
@@ -4664,14 +4525,12 @@ class AstrocytePlotter():
                                                                     filter_duration=filter_duration,
                                                                     with_output_details=True,
                                                                     dff_mode=dff_mode)
-                    print('NU COMPARE', d['num_compare'])
                     res_d[behaviour] = d['num_compare']
 
                     if behaviour == 'default':
                         res_d['random'] = d['num_fake']
                 else:
                     print('Behaviour {} not in one of {} / {}'.format(behaviour, astro_1.id, astro_2.id))
-        print('RES D', self.get_astro_pair_id(astro_pair),  res_d)
         if save_pkl_path is not None:
             saving_utils.save_pickle(res_d, save_pkl_path)
 
@@ -4679,7 +4538,6 @@ class AstrocytePlotter():
         behaviours.append('random')
         x = []
         y = []
-        print('RES D', res_d)
         for k in behaviours:
             if ((k in astro_1.indices_d) and (k in astro_2.indices_d) and (k in astro_1.event_subsets) and (k in astro_2.event_subsets)) or (k=='random'):
                 if k != 'random':
@@ -4696,7 +4554,6 @@ class AstrocytePlotter():
 
     def get_compare_states_same_astro_all_xcorr(self, astro_pair, align_setting='xcorr_free', dff_mode=False, n_fake_samples=5, save_pkl_path=None, filter_duration=(None, None)):
         if os.path.isfile(save_pkl_path):
-            print('FILE EXISTS')
             res_d = saving_utils.load_pickle(save_pkl_path)
         else:
             res_d = {}
@@ -4738,14 +4595,11 @@ class AstrocytePlotter():
                                                                     behaviour='default',
                                                                     filter_duration=filter_duration,
                                                                     with_output_details=True)
-                    print('NU COMPARE', d['num_compare'])
-
                     if behaviour_pair[0] == 'rest':
                         res_d['_'.join(behaviour_pair) + '_{}'.format(astro_day)] = d['num_compare']
                     if behaviour_pair[0] == 'default':
                         res_d['random_{}'.format(astro_day)] = d['num_fake']
 
-        print('RES D', self.get_astro_pair_id(astro_pair),  res_d)
         if save_pkl_path is not None:
             saving_utils.save_pickle(res_d, save_pkl_path)
 
@@ -4755,18 +4609,13 @@ class AstrocytePlotter():
 
         x = [k for k in res_d.keys()]
         y = [res_d[k] for k in x]
-        #y = [res_d['rest'], res_d['running'], res_d['default'], res_d['random']]
-        print(y)
-        print(x)
-        print('RES DHERE', res_d)
         fig = plotly_utils.plot_point_box_revised(x, y, title='Behaviour correlations', x_title='Behaviour', y_title='Xcorr value')
 
         return fig, res_d
 
-    #TODO NOT DONE
+
     def get_compare_between_group_xcorr(self, astroA_l_pairs, n_fake_samples=5, dff_mode=False, save_pkl_path=None, filter_duration=[None, None]):
         if os.path.isfile(save_pkl_path):
-            print('FILE EXISTS')
             res_d = saving_utils.load_pickle(save_pkl_path)
         else:
             res_d = {'between' : [], 'random' : [], 'between_id' : []}
@@ -4782,10 +4631,9 @@ class AstrocytePlotter():
                     if astroA_pair_1[0].id == astroA_pair_2[0].id:
                         continue
 
-                    print('ASTRO PAIRS {}, {}'.format(self.get_astro_pair_id(astroA_pair_1), self.get_astro_pair_id(astroA_pair_2)))
                     for i in [0, 1]:
                         for j in [0, 1]:
-                            print('I, J', i, j)
+
                             astro_pair = [astroA_pair_1[i], astroA_pair_2[j]]
 
                             d = compare_astro_utils.alignment_counter(astro_pair[0], astro_pair[1],
@@ -4804,7 +4652,6 @@ class AstrocytePlotter():
 
             if save_pkl_path is not None:
                 saving_utils.save_pickle(res_d, save_pkl_path)
-        print('RES D', res_d)
         x = ['Astro between group', 'Random between group']
         y = [res_d['between'], res_d['random']]
         fig = plotly_utils.plot_point_box_revised(x, y, title='Between group correlations vs random (95% confidence)', x_title='', y_title='Xcorr value')
@@ -4847,10 +4694,8 @@ class AstrocytePlotter():
                 if measure != None:
                     measure_res = astroA.res_d[measure][astroA.event_subsets[bh]]
                     y_pair_l[i].append(measure_res)
-                    print(astroA.print_id, 'state', bh, 'measure', measure, np.mean(measure_res))
                 else:
                     n = (len(astroA.event_subsets[bh]) / len(astroA.indices_d[bh])) * astroA.minute_frames
-                    print('BH {} n {}'.format(bh, n))
                     y_pair_l[i].append([n])
             y_pair_l_l.append(y_pair_l)
         fig, stats_d = plotly_utils.plot_scatter_mult_with_avg(x_l=x_l, y_l_l=y_pair_l_l, y_mean=None, name_l=name_l, mode='lines', x_title='', y_title='',
@@ -4867,12 +4712,8 @@ class AstrocytePlotter():
         indices_filt_after = aqua_utils.filter_range_inds(inds, astroA.indices_d[after_bh], range=(1, after_range), prop=1.0)
         indices_filt = np.array(np.sort(list(set(indices_filt_before) & set(indices_filt_after))))
 
-        #print('LEN INDICES_FILT: {}'.format(len(indices_filt)))
-        #print('TOTAL IND {} BEFORE {} AFTER {} JOIN {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
         if len(indices_filt) == 0:
             return [], []
-        #print('Len indices {} len filt before {} len filt after {} len filt {}'.format(len(inds), len(indices_filt_before), len(indices_filt_after), len(indices_filt)))
-        #print('LEN INDICES FILT : {}'.format(len(indices_filt)))
 
         delay_info_args = {'event_inds_subset' : astroA.event_subsets['default'],
                        'min_delay' : -before_range,
@@ -4885,7 +4726,6 @@ class AstrocytePlotter():
 
         _, _, _, signal_delays_l_l, peak_mins_l_l, valid_event_i_l_l = aqua_utils.get_delay_info_from_res(indices_filt, astroA.res_d, **delay_info_args)
 
-        print('Num unique indices CHECK {}'.format(len(valid_event_i_l_l)))
         if measure is None:
             before_l = 0
             after_l = 0

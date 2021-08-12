@@ -422,7 +422,8 @@ def plot_scatter_mult(x_l, y_l_l, name_l, mode='lines', mode_l=[], conf_mode='li
 
 
 def plot_scatter_mult_with_avg(x_l, y_l_l, y_mean, name_l, mode='lines', title='scatter', x_title='', y_title='',
-                        xrange=None, yrange=None, confidence=True, avg_confidence=True, with_stats=True, point_box=False, mean_width_size=10):
+                        xrange=None, yrange=None, confidence=True, avg_confidence=True, with_stats=True, point_box=False, mean_width_size=10,
+                        exclude_non_avg_conf=False):
     """
     In plot_scatter_mult we pass y_l, a list of values of y. Here we pass a list of lists of values of y
     For each datapoint in list we calculate the 95% confidence intervals
@@ -487,7 +488,7 @@ def plot_scatter_mult_with_avg(x_l, y_l_l, y_mean, name_l, mode='lines', title='
                 symmetric=True,
                 array=np.array(conf_high_l_l[i]) - np.array(mean_l_l[i]),
                 color=colour_l[i]
-            ),
+            ) if not exclude_non_avg_conf else None,
             opacity=0.5,
             name=name_l[i]
         )
@@ -1504,3 +1505,14 @@ def seaborn_joint_grid(df, x_key, y_key, kind='reg', title='', text=''):
     g = g.plot_marginals(sns.distplot, kde=True, bins=12, color="xkcd:bluey grey")
     g.ax_joint.text(1.5, 5.5, text, fontstyle='italic')
     plt.tight_layout()
+
+def plot_scatter_histogram(x, y_hist, y_scatter, num_bins=200, title='', x_title='', y_title=''):
+    scatter_trace = go.Scatter(x=x, y=y_scatter, mode='lines')
+    size_bins = (np.max(x) - 0) / num_bins
+    histogram_trace = go.Histogram(x=y_hist, histnorm='probability density', xbins=dict(start=0, size=size_bins, end=np.max(x)))
+
+    layout = go.Layout(title=title, xaxis=dict(title=x_title),
+                        yaxis=dict(title=y_title),)
+    fig = go.Figure(data=[scatter_trace, histogram_trace], layout=layout)
+
+    return fig

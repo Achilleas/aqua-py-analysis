@@ -4,7 +4,8 @@ from preprocessing import analysis_pp
 from analysis.general_utils import aqua_utils, saving_utils, duration_utils
 
 class AstrocyteAnalyzer():
-    def __init__(self, base_path, day, aqua_bound=True):
+    def __init__(self, base_path, day, aqua_bound=True, filter_event_duration_fr=2,  filter_event_size=2, 
+        avg_extra=1, continuous_stick=False):
         self.base_path = base_path
         self.day = day
         self.aqua_bound = aqua_bound
@@ -14,12 +15,24 @@ class AstrocyteAnalyzer():
         self.duration_small = 11 #number of frames for small duration signals (6 frames is around 5.x sec)
         self.behaviour_base_path = 'roi_data_merged/other.csv'
         self.oscilloscope_base_path = 'oscilloscope/oscilloscope.csv'
+        
+        # Extra averaging on behaviours (speed, stick etc.) if video of merged.pkl was further averaged down to match video frames
+        self.avg_extra = avg_extra
+        self.continuous_stick = continuous_stick
+
+        self.filter_event_duration_fr = filter_event_duration_fr
+        self.filter_event_size = filter_event_size
+
         self.id = os.path.join(os.path.basename(os.path.normpath(self.base_path)), 'day_' + str(self.day))
+        
+        avg_str = ''
+        if avg_extra != 1:
+            avg_str = '_avg'
 
         if aqua_bound:
-            self.aqua_base_path = 'aqua_bound/aqua_merged/merged.pkl'
+            self.aqua_base_path = f'aqua_bound/aqua_merged/merged{avg_str}.pkl'
         else:
-            self.aqua_base_path = 'aqua_no_bound/aqua_merged/merged.pkl'
+            self.aqua_base_path = f'aqua_no_bound/aqua_merged/merged{avg_str}.pkl'
 
         self.behaviours_path = os.path.join(self.experiment_path, self.behaviour_base_path)
         self.oscilloscope_path = os.path.join(self.experiment_path, self.oscilloscope_base_path)
@@ -29,12 +42,16 @@ class AstrocyteAnalyzer():
         # Behavioural indices
         self.indices_d, self.roi_dict, l = analysis_pp.read_behaviour_indices(
                                                         self.behaviours_path,
-                                                        self.oscilloscope_path)
-        self.stick_bin, self.speed_bin, self.whisker_bin, self.pupil_values, self.speed_values = l
+                                                        self.oscilloscope_path, 
+                                                        avg_extra=avg_extra,
+                                                        continuous_stick=self.continuous_stick)
+        self.stick_bin, self.speed_bin, self.whisker_bin, self.stick_values, self.speed_values, self.pupil_values = l
 
         ##############################################################################
         self.res_d, self.input_shape_l, self.fr_inv, self.spatial_res = saving_utils.load_pickle(self.save_res_path)
-        self.res_d = aqua_utils.apply_res_d_filter(self.res_d, min_event_duration=2, min_um_size=2)
+        self.res_d = aqua_utils.apply_res_d_filter(self.res_d, 
+                                                    min_event_duration=self.filter_event_duration_fr, 
+                                                    min_um_size=self.filter_event_size)
         self.fr = 1.0/self.fr_inv
         self.res_d['time'] = self.res_d['tEnd'] - self.res_d['tBegin']
         self.res_d['time_s'] = self.res_d['time'] / self.fr
@@ -84,10 +101,36 @@ class AstrocyteAnalyzer():
                 for x in range(480, 496):
                     self.bright_spots[y, x] = 1
 
+        if self.id == 'gakyid_many_stick/day_0':
+            for y in range(360,420):
+                for x in range(80,120):
+                    self.bright_spots[y, x] = 1
+
+
+        if self.id == 'gakyid_many_stick/day_1':
+            for y in range(350,420):
+                for x in range(280,310):
+                    self.bright_spots[y, x] = 1
+
+        if self.id == 'haedus_many_stick/day_0':
+            for y in range(280,350):
+                for x in range(470,512):
+                    self.bright_spots[y, x] = 1
+
         #Specific video segments to remove events from (e.g. df/f is unusually high)
         if self.id == 'm181129_d190222_c005/day_0':
             #df/f is just incorrect, choose to ignore the last video segment
             self.ignore_events_l.extend(np.where(self.res_d['event_i_video_segment'] == 8)[0])
+
+        #Unique indexes to video
+        if self.id == 'beemim/day_0':
+            self.indices_d['grooming'] = np.sort(np.concatenate([np.arange(591,709), np.arange(17967, 18155)]))
+            
+            #Remove index from stick
+            #This is specific to this dataset
+            for k in self.indices_d.keys():
+                if 'stick' in k:
+                    self.indices_d[k] = np.sort(np.array(list(set(np.copy(self.indices_d[k])) - set(self.indices_d['grooming']))))
 
         #Filter events that take place in bright spots
         self.setup_bright_spot_events()

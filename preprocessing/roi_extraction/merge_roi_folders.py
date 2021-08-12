@@ -58,8 +58,15 @@ if __name__ == '__main__':
 
     base_folder = args['--base_folder']
 
-    input_filepath = os.path.join(base_folder, 'data', 'roi_data')
-    output_filepath = os.path.join(base_folder, 'data', 'roi_data_merged')
+    input_filepath = os.path.join(base_folder, 'roi_data')
+    output_filepath = os.path.join(base_folder, 'roi_data_merged')
+
+    if not os.path.exists(input_filepath):
+        print('{input_filepath} does not exist!')
+
+    if not os.path.exists(output_filepath):
+        os.makedirs(output_filepath)
+
     print('INPUT:', input_filepath, os.path.exists(input_filepath))
     print('OUTPUT:', output_filepath, os.path.exists(output_filepath))
     merge_roi_folders(input_filepath, output_filepath)

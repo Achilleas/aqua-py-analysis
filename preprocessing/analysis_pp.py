@@ -196,8 +196,8 @@ def read_behaviour_indices_no_whiskers_axon_astro(behaviours_path, oscilloscope_
     df_extra = pandas.concat([df_behaviours, df_oscilloscope], axis=1, sort=False)
     roi_dict = {'extra' : {k : df_extra[k].values for k in df_extra.columns}}
 
-    colour_channels = list(roi_dict.keys())
     #avg_num = 3
+
     #roi_dict = df_average(roi_dict, colour_channels, n=avg_num, to_sum_keys=['speed'])
     stick_bin = stick_preprocessing(roi_dict['extra']['stick'], num_std=stick_threshold_std)
     speed_bin = speed_preprocessing(roi_dict['extra']['speed'])
@@ -314,8 +314,21 @@ def read_behaviour_indices_no_whiskers_axon_astro(behaviours_path, oscilloscope_
     return indices_d, roi_dict, [stick_bin, speed_bin, pupil_values, speed_values]
     #return indices_d, roi_dict, [stick_bin, speed_bin, pupil_values]
 
+def bin_avg_np_array(np_arr, bin_size=1):
+    if bin_size == 1 or bin_size == None:
+        return np_arr
+
+    num_bins = int(len(np_arr) // bin_size)
+    bin_mod = len(np_arr) % bin_size 
+
+    if bin_mod != 0:
+        np_arr = np_arr[:-bin_mod]
+    
+    return np.array([np.mean(binned_arr) for binned_arr in np.split(np_arr, num_bins)])
+
 def read_behaviour_indices(behaviours_path, oscilloscope_path,
-                            stick_threshold_std=2):
+                            stick_threshold_std=2,
+                            avg_extra=1, continuous_stick=False):
     """
     Given a behaviours_path .csv and oscilloscope_path .csv return
     relevant behavioural indices
@@ -339,13 +352,31 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
 
     df_behaviours = pandas.read_csv(behaviours_path)
     df_oscilloscope = pandas.read_csv(oscilloscope_path)
+    
     df_extra = pandas.concat([df_behaviours, df_oscilloscope], axis=1, sort=False)
-    roi_dict = {'extra' : {k : df_extra[k].values for k in df_extra.columns}}
+    if (avg_extra == 1) or (avg_extra is None):
+        roi_dict = {'extra' : {k : df_extra[k].values for k in df_extra.columns}}
+    else:
+        roi_dict = {'extra' : {k : bin_avg_np_array(df_extra[k].values, bin_size=avg_extra) for k in df_extra.columns}}
 
-    colour_channels = list(roi_dict.keys())
     #avg_num = 3
     #roi_dict = df_average(roi_dict, colour_channels, n=avg_num, to_sum_keys=['speed'])
+    stick_values = roi_dict['extra']['stick']
     stick_bin = stick_preprocessing(roi_dict['extra']['stick'], num_std=stick_threshold_std)
+
+    # Will look at up to 1.5 seconds (if 10.3 frames per second as default) after event
+    # e.g. if there is running at index 1, will look at indices 1-16 as running
+    # running_exact can be used for exact indices instead
+
+    ind_future_num = 15
+
+    if avg_extra > 1:
+        ind_future_num = int(ind_future_num / avg_extra)
+
+    print('IND FUTURE NUM', ind_future_num)
+    # If continuous stick we set everything to 1
+    if continuous_stick:
+        stick_bin = [1 for v in stick_bin]
     speed_bin = speed_preprocessing(roi_dict['extra']['speed'])
     speed_values = roi_dict['extra']['speed']
     whisker_bin = whiskers_preprocessing(roi_dict['extra']['whiskers'])
@@ -356,28 +387,34 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
     #no running              - (frames) when mouse is not running)
     running_exact_ind, rest_exact_ind = get_behaviour_indices(speed_bin, 1, complementary=True)
     default_ind = np.arange(len(running_exact_ind) + len(rest_exact_ind))
-    running_ind, rest_ind = get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=15, complementary=True)
+    running_ind, rest_ind = get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=True)
     #when mouse is running but removing the last 15 frames of each run (when it stops exactly)
-    running_semi_exact_ind = remove_ends(get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=15, complementary=False), num=15)
+    running_semi_exact_ind = remove_ends(get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=False), num=ind_future_num)
     rest_semi_exact_ind = np.sort(np.array(list(set(default_ind) - set(running_semi_exact_ind))))
     #running_expect          - (-10:0 frames) when mouse start running from rest
-    running_expect_ind = np.sort(np.array(list(set(remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_past=15, complementary=False), max_size=15)) - set(running_ind))))
+    running_expect_ind = np.sort(np.array(list(set(remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_past=ind_future_num, complementary=False), max_size=ind_future_num)) - set(running_ind))))
     #running_exact_start           - (exact frames when mouses just starts running)
-    running_exact_start_ind = remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=15, complementary=False))
-    stick_ind, no_stick_ind = get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=15, complementary=True)
+    running_exact_start_ind = remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=False))
+    stick_ind, no_stick_ind = get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=True)
+
+
+
     #stick_start_exact       - (frames) when stick just hits the mouse
-    stick_exact_start_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_future=15, complementary=False))
+    stick_exact_start_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_future=ind_future_num, complementary=False))
     #stick_start             - (0:10 frames) around !first touch! on the stick
-    stick_start_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=15, complementary=False), max_size=15)
+    stick_start_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=False), max_size=ind_future_num)
     #stick_end               - (0:10 frames at end of stick)
-    stick_end_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=15, complementary=False), max_size=15, inverse=True)
+    stick_end_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=False), max_size=ind_future_num, inverse=True)
     #stick_expect            - (-10:0 frames) around !first touch! on the stick (see if mouse expects)
-    stick_expect_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=15, ind_future=0, complementary=False), max_size=15)
+    stick_expect_ind = remove_consecutives(get_behaviour_indices(stick_bin, 1, ind_past=ind_future_num, ind_future=0, complementary=False), max_size=ind_future_num)
     #stick_rest              - (frames) when stick is on mouse and mouse is resting
     stick_rest_ind = np.array(list(set(get_behaviour_indices(stick_bin, 1, complementary=False)) & set(rest_ind)))
     #stick run               - (frames) when stick hits the mouse and x frames after when its only running
-    stick_run_ind_15 = np.array(list(set(get_behaviour_indices(stick_bin, 1, ind_future=15, complementary=False))  & set(running_ind)))
-    stick_run_ind_30 = np.array(list(set(get_behaviour_indices(stick_bin, 1, ind_future=30, complementary=False)) & set(running_ind)))
+    stick_run_ind_15 = np.array(list(set(get_behaviour_indices(stick_bin, 1, ind_future=ind_future_num, complementary=False))  & set(running_ind)))
+    stick_run_ind_30 = np.array(list(set(get_behaviour_indices(stick_bin, 1, ind_future=ind_future_num*2, complementary=False)) & set(running_ind)))
+
+    #running_no_stick - when its running but not after having hit stick (up to 15 frames)
+    running_no_stick_ind = np.array(list(set(running_ind) - set(stick_run_ind_15)))
 
     #stick_rest_no_run_ind   - (frames) when mouse is on stick is resting and there is no running activity (running_ind) around.
     #                        - since running_ind include 15 frames in future, if its 0 1 0 0 1 0 0 0 0 0 0 0 0 ... 0 0,
@@ -385,14 +422,14 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
     stick_rest_no_run_ind = np.array(list(set(np.copy(stick_rest_ind)) - set(running_ind)))
 
     whisker_exact_ind, no_whisker_exact_ind = get_behaviour_indices(whisker_bin, 1, ind_past=0, ind_future=0, complementary=True)
-    whisker_ind, no_whisker_ind = get_behaviour_indices(whisker_bin, 1, ind_past=0, ind_future=15, complementary=True)
+    whisker_ind, no_whisker_ind = get_behaviour_indices(whisker_bin, 1, ind_past=0, ind_future=ind_future_num, complementary=True)
 
     #running_start =         - (0, 15 frames after running starts), excluding stick start
-    running_start_ind = np.sort(np.array(list(set(remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_future=15, complementary=False), max_size=15)) - set(stick_start_ind))))
+    running_start_ind = np.sort(np.array(list(set(remove_consecutives(get_behaviour_indices(speed_bin, 1, ind_future=ind_future_num, complementary=False), max_size=ind_future_num)) - set(stick_start_ind))))
 
-    rest_start_ind = np.sort(np.array(list(set(remove_consecutives(rest_ind))))) - 15 #-15 here is because running ind looks 15 frames in future
+    rest_start_ind = np.sort(np.array(list(set(remove_consecutives(rest_ind))))) - ind_future_num #-15 here is because running ind looks 15 frames in future
     #Just for the start
-    rest_start_ind[rest_start_ind < 0] += 15
+    rest_start_ind[rest_start_ind < 0] += ind_future_num
 
     #Whiskering at rest at stick
     whisker_rest_stick_ind = np.array(list(set(whisker_ind) & set(stick_ind) & set(rest_ind)))
@@ -438,7 +475,7 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
                  'running_exact_start' : running_exact_start_ind,
                  'running_start' : running_start_ind,
                  'running_before' : running_expect_ind,
-
+                 'running_no_stick' : running_no_stick_ind,
                  'stick_run_ind_15' : stick_run_ind_15,
                  'stick_run_ind_30' : stick_run_ind_30,
 
@@ -476,7 +513,7 @@ def read_behaviour_indices(behaviours_path, oscilloscope_path,
         print('REMOVED {} key'.format(k))
         del indices_d[k]
 
-    return indices_d, roi_dict, [stick_bin, speed_bin, whisker_bin, pupil_values, speed_values]
+    return indices_d, roi_dict, [stick_bin, speed_bin, whisker_bin, stick_values, speed_values, pupil_values]
 
 def get_connected_components_2D(array, structure=np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])):
     '''
