@@ -1,19 +1,37 @@
 # aqua-py-analysis
 
+Analsysis codebase for paper:
+*[Ca2+ Activity Maps Of Astrocytes Tagged By Axo-Astrocytic AAV Transfer](https://www.google.com)*
+
 ## Requirements:
-Python 3.7, Matlab 2019a+ (should work for older Matlab versions)
+- Python 3.7
+
+Additional requirements for AquA preprocessing:
+- Matlab 2019a+
 
 ## Datasets
 
-Datasets available at:
- - **[INSERT LINK](https://google.com)**
- - **[Example dataset](https://drive.google.com/open?id=1AKd6eTaFozHGF5d6zzddp5zLGm503cFs)**
+| Dataset available **[here](https://www.dropbox.com/sh/csaxn3o84zchh4g/AABZge806LiT7rinoWtOnXMYa?dl=0)** | |
+| ------------- | ------------- |
+| [First astrocyte experiment dataset](https://www.dropbox.com/s/9n7aufr6fuuo101/astro_first_experiment.zip?dl=0)  | **Main dataset.** Used to assess speciotemporal organisation of astrocyte calcium signals during different behavioural states  - *rest, run, vibrissa stimulation, vibrissa exploration* |
+| [Second astrocyte experiment dataset](https://www.dropbox.com/s/95b29bm7avrhn7z/astro_second_experiment.zip?dl=0) | Used to assess if multiple vibrissa stimuli alter calcium activity in astrocytes in relation to single vibrissae stimuli/no stimuli) |
+| [Astro-axon dataset](https://www.dropbox.com/s/bcniyf365yl6sbd/astro_axons.zip?dl=0) | Attempt to see if axon or astrocyte calcium activity follows vibrissae stimulation|
+| [Data plots](https://www.dropbox.com/s/6z9199j95viuxkk/data_plots_Aug1.zip?dl=0) | All plots presented in paper |
 
 ## Loading datasets
-| Notebook  |                   |
+| Notebooks  |                   |
 | ------------- | ------------- |
-| **[AstrocyteExample.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/AstrocyteExample.ipynb)**   | Astrocyte datasets  |
-| **[AxonAstrocyteExample.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/AxonAstrocyteExample.ipynb)** | Astro-Axon datasets  |
+| **[AstrocyteExample.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/AstrocyteExample.ipynb)**   | Astrocyte notebook example of dataset loading |
+| **[AxonAstrocyteExample.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/AxonAstrocyteExample.ipynb)** | Astro-Axon notebook example of dataset loading |
+| **Paper related notebooks** |          | 
+| **[generate_astrocyte_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_astrocyte_paper_plots.ipynb)**| Generates relevant paper plots from first/second astrocyte experiment dataset |
+| **[generate_axon_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_axon_paper_plots.ipynb)**| Generates relevant paper plots from astro-axon experiment dataset |
+| **[generate_misc_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_misc_paper_plots.ipynb)**| Generates  other remaining paper plots (capsid density plot, astrocyte density plot in different cortical layers, neuron density plot in different cortical layers) | 
+| **[statistical_analysis.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/statistical_analysis.ipynb)**| Statistical analysis of any datasets generated relevant to paper | 
+
 
 ## Preprocessing (creating your own dataset)
-See **[preprocessing-README](https://github.com/Achilleas/aqua-py-analysis/tree/master/preprocessing/README.md)**
+See **[preprocessing-README](https://github.com/Achilleas/aqua-py-analysis/tree/master/preprocessing/README.md)** for details
+
+#### Important note
+**The objective of this github repository is to replicate the analysis of AquA processed data generated for this paper. Although the codebase can be used for new experiments, it might have to be modified to account for different experimental conditions.**

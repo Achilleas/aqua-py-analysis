@@ -8,6 +8,7 @@ import os
 import csv
 from analysis.general_utils import plotly_utils
 import pandas as pd
+from analysis.general_utils import stat_utils
 
 def generate_directory_path(path):
     if not os.path.exists(os.path.dirname(path)):
@@ -161,3 +162,18 @@ def save_pth_plt_l_log(plt_l, pth_l, axis='x'):
                 save_plotly_fig(plt_copy, pth+'_ylog')
             else:
                 save_plotly_fig(plt_copy, pth+'_ylog', y_title=plt_copy['layout']['yaxis']['title']['text'] + '-log')
+
+def save_basic_stats(data_d, name, base_folder=""):
+    """
+    Save simple statistics (mean, std, CI 95) given dictionary of lists for each key
+    """
+    data_stats_d = {}
+    for k in data_d.keys():
+        m, ci_low, ci_up = stat_utils.mean_confidence_interval(data_d[k])
+        ci = m - ci_low
+
+        data_stats_d[f'{k}_mean'] = m
+        data_stats_d[f'{k}_std'] = np.std(data_d[k])
+        data_stats_d[f'{k}_ci'] = ci
+    dict_to_csv(data_stats_d, name, base_folder)
+
