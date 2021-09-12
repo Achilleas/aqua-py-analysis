@@ -1,7 +1,7 @@
 # aqua-py-analysis
 
 Analsysis codebase for paper:
-*[Ca2+ Activity Maps Of Astrocytes Tagged By Axo-Astrocytic AAV Transfer](https://www.google.com)*
+*[ (link TBD) Ca2+ Activity Maps Of Astrocytes Tagged By Axo-Astrocytic AAV Transfer ](https://www.google.com)*
 
 ## Requirements:
 - Python 3.7
@@ -17,7 +17,9 @@ Additional requirements for AquA preprocessing:
 | [First astrocyte experiment dataset](https://www.dropbox.com/s/9n7aufr6fuuo101/astro_first_experiment.zip?dl=0)  | **Main dataset.** Used to assess speciotemporal organisation of astrocyte calcium signals during different behavioural states  - *rest, run, vibrissa stimulation, vibrissa exploration* |
 | [Second astrocyte experiment dataset](https://www.dropbox.com/s/95b29bm7avrhn7z/astro_second_experiment.zip?dl=0) | Used to assess if multiple vibrissa stimuli alter calcium activity in astrocytes in relation to single vibrissae stimuli/no stimuli) |
 | [Astro-axon dataset](https://www.dropbox.com/s/bcniyf365yl6sbd/astro_axons.zip?dl=0) | Axon and astrocyte calcium acitvity during behavioural and vibrissa stimulation |
-| [Data plots](https://www.dropbox.com/sh/60cxgwx1s63ebdd/AAD698Fq2j_QIRV4Heox2C8Oa?dl=0) | All plots presented in paper |
+| [Data plots curation SA](https://www.dropbox.com/sh/j43kndms5u8075g/AAApf4jrTZ7up2spS4OD0EFAa?dl=0) | Plots as presented in paper sorted by Figure |
+| [Data plots](https://www.dropbox.com/sh/60cxgwx1s63ebdd/AAD698Fq2j_QIRV4Heox2C8Oa?dl=0) | All relevant generated plots |
+
 
 ## Loading datasets
 | Notebooks  |                   |
@@ -28,7 +30,7 @@ Additional requirements for AquA preprocessing:
 | **[generate_astrocyte_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_astrocyte_paper_plots.ipynb)**| Generates relevant paper plots from first/second astrocyte experiment dataset |
 | **[generate_axon_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_axon_paper_plots.ipynb)**| Generates relevant paper plots from astro-axon experiment dataset |
 | **[generate_misc_paper_plots.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/generate_misc_paper_plots.ipynb)**| Generates  other remaining paper plots (capsid density plot, astrocyte density plot in different cortical layers, neuron density plot in different cortical layers) | 
-| **[statistical_analysis.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/statistical_analysis.ipynb)**| Statistical analysis of any datasets generated relevant to paper | 
+| **[statistical_analysis.ipynb](https://github.com/Achilleas/aqua-py-analysis/blob/master/statistical_analysis.ipynb)**| Statistical analysis of datasets generated relevant to paper | 
 
 
 ## Preprocessing (creating your own dataset)
