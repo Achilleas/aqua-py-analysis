@@ -14,7 +14,7 @@ Additional requirements for AquA preprocessing:
 | Dataset available **[here](https://www.dropbox.com/sh/csaxn3o84zchh4g/AABZge806LiT7rinoWtOnXMYa?dl=0)** | |
 | ------------- | ------------- |
 | [Dataset structure](https://www.dropbox.com/s/csgi2j146sfxjsu/datasets_structure.txt?dl=0) | Dataset file structure |
-| [First astrocyte experiment dataset](https://www.dropbox.com/s/9n7aufr6fuuo101/astro_first_experiment.zip?dl=0)  | **Main dataset.** Used to assess speciotemporal organisation of astrocyte calcium signals during different behavioural states  - *rest, run, vibrissa stimulation, vibrissa exploration* |
+| [First astrocyte experiment dataset](https://www.dropbox.com/s/9n7aufr6fuuo101/astro_first_experiment.zip?dl=0)  | **Main dataset.** Used to assess speciotemporal organisation of astrocyte calcium signals during different behavioural states  - *rest, run, vibrissa stimulation, vibrissa exploration* and to generate the activity heatmaps|
 | [Second astrocyte experiment dataset](https://www.dropbox.com/s/95b29bm7avrhn7z/astro_second_experiment.zip?dl=0) | Used to assess if multiple vibrissa stimuli alter calcium activity in astrocytes in relation to single vibrissae stimuli/no stimuli) |
 | [Astro-axon dataset](https://www.dropbox.com/s/bcniyf365yl6sbd/astro_axons.zip?dl=0) | Axon and astrocyte calcium acitvity during behavioural and vibrissa stimulation |
 | [Data plots curation SA](https://www.dropbox.com/sh/j43kndms5u8075g/AAApf4jrTZ7up2spS4OD0EFAa?dl=0) | Plots as presented in paper sorted by Figure |
