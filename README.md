@@ -1,6 +1,6 @@
 # aqua-py-analysis
 
-Analsysis codebase for paper:
+Analysis codebase for paper:
 *[ Ca+ activity maps of astrocytes tagged by axoastrocytic AAV transfer ](https://www.science.org/doi/10.1126/sciadv.abe5371)*
 
 ## Requirements:
