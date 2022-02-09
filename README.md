@@ -1,7 +1,7 @@
 # aqua-py-analysis
 
 Analsysis codebase for paper:
-*[ (link TBD) Ca2+ Activity Maps Of Astrocytes Tagged By Axo-Astrocytic AAV Transfer ](https://www.google.com)*
+*[ Ca+ activity maps of astrocytes tagged by axoastrocytic AAV transfer ](https://www.science.org/doi/10.1126/sciadv.abe5371)*
 
 ## Requirements:
 - Python 3.7
